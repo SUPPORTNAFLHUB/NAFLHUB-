@@ -184,12 +184,6 @@
             <select id="selectTeamView" onchange="loadTeamDetails()" style="margin-bottom: 15px;"></select>
             <div id="teamDetailsBox" style="background:#262626; padding:15px; border-radius:8px;"></div>
         </div>
-      <div id="teamAdminKick" style="margin-top: 15px; background: #262626; padding: 12px; border-radius: 8px; text-align: right;">
-    <h4 style="color:#ff4444; margin-top:0;">🚫 طرد لاعب من فريقك:</h4>
-    <input type="text" id="kickTargetUser" placeholder="اسم اللاعب في روبلوكس...">
-    <button class="action-btn" onclick="kickPlayerFromTeam()" style="background:#ff4444; color:#fff;">طرد اللاعب ❌</button>
-</div>
-
 
         <!-- 5. My Career -->
         <div id="career" class="section-content">
@@ -203,8 +197,8 @@
                 <!-- لوحة التحكم الإدارية (Owner / Staff) -->
                 <div id="adminPanel" style="display:none; margin-top:20px; border-top:1px solid #444; padding-top:15px; text-align:right;">
                     <h3 style="color:#00ff87;">🛠️ لوحة تحكم الإدارة (Owner/Staff)</h3>
-         
-                    <!-- 1. تعديل جدول الدوري مباشرة -->
+                    
+                    <!-- 1. تعديل جدول الدوري -->
                     <h4 style="margin-top:15px;">تعديل بيانات وإحصائيات الدوري (Table & Info):</h4>
                     <select id="editTeamSelect">
                         <option value="JSK">JSK</option>
@@ -213,69 +207,12 @@
                         <option value="CRB">CRB</option>
                         <option value="USMH">USMH</option>
                         <option value="MCO">MCO</option>
-                        <option value="NAHD">NAHD</option>
-                        <option value="ESS">ESS</option>
-                    </select>
-                    <div class="inputs-row">
-                        <input type="number" id="editPlayed" placeholder="لعب">
-                        <input type="number" id="editWon" placeholder="فاز">
-                        <input type="number" id="editDrawn" placeholder="تعادل">
-                        <input type="number" id="editLost" placeholder="خسر">
-                        <input type="number" id="editPoints" placeholder="النقاط">
-                    </div>
-                    <div class="inputs-row">
-                        <input type="number" id="editGoalsScored" placeholder="أهداف له (Scored)">
-                        <input type="number" id="editGoalsConceded" placeholder="أهداف عليه (Conceded)">
-                    </div>
-                    <button class="action-btn" onclick="saveTeamTableAndStats()">حفظ ترتيب وإحصائيات الفريق 📊</button>
+                        <option
 
-                    <!-- 2. تعديل المباريات -->
-                    <h4 style="margin-top:20px;">تعديل المباريات (Games):</h4>
-                    <select id="gameCardSelect">
-                        <option value="0">المباراة الأولى (1)</option>
-                        <option value="1">المباراة الثانية (2)</option>
-                        <option value="2">المباراة الثالثة (3)</option>
-                        <option value="3">المباراة الرابعة (4)</option>
-                    </select>
-                    <input type="text" id="editVs" placeholder="مثال: JSK vs MCA">
-                    <input type="text" id="editTime" placeholder="مثال: Time: 20:00 GMT">
-                    <input type="text" id="editStad" placeholder="مثال: Stad: 5 Juillet">
-                    <button class="action-btn" onclick="updateGameData()">تحديث المباراة ⚽</button>
-
-                    <!-- 3. تعيين الرولات -->
-                    <h4 style="margin-top:20px;">تعيين رول للاعب:</h4>
-                    <input type="text" id="targetUser" placeholder="اسم لاعب روبلوكس">
-                    <select id="newRoleSelect">
-                        <option value="Player">Player</option>
-                        <option value="Staff">Staff</option>
-                        <option value="Co-owner">Co-owner</option>
-                        <option value="Owner">Owner</option>
-                        <option value="Owner CRB">Owner CRB</option>
-                        <option value="Owner JSK">Owner JSK</option>
-                        <option value="Owner MCA">Owner MCA</option>
-                        <option value="Owner USMA">Owner USMA</option>
-                        <option value="Owner USMH">Owner USMH</option>
-                        <option value="Owner MCO">Owner MCO</option>
-                        <option value="Owner ESS">Owner ESS</option>
-                        <option value="Owner NAHD">Owner NAHD</option>
-                    </select>
-                    <button class="action-btn" onclick="updateUserRole()">حفظ الرول 👤</button>
-                </div>
-
-                <!-- العروض الواردة -->
-                <div style="margin-top: 20px; border-top:1px solid #444; padding-top: 10px; text-align:right;">
-                    <h4>📩 عروض الفرق الواردة:</h4>
-                    <div id="myInvites"><p style="color: #888;">لا توجد عروض حالياً.</p></div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-    <!-- أضف هذين السطرين هنا قبل script.js -->
+                              <!-- أضف هذين السطرين هنا قبل script.js -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script src="script.js?v=10"></script>
 </body>
 </html>
-
