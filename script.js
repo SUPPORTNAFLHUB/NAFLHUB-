@@ -587,3 +587,56 @@ function updateUserRole() {
         });
     });
 }
+
+// ==========================================
+// دالة طرد لاعب من الفريق
+// ==========================================
+function kickPlayerFromTeam() {
+    const targetUser = document.getElementById("kickTargetUser").value.trim();
+
+    if (!targetUser) {
+        alert("يرجى كتابة اسم اللاعب المرادطرده!");
+        return;
+    }
+
+    if (typeof db === 'undefined' || !db) {
+        alert("خطأ: الاتصال بالسحاب غير مهيأ.");
+        return;
+    }
+
+    // البحث عن اللاعب في قاعدة البيانات السحابية Firebase
+    db.ref('users/' + targetUser).once('value', (snapshot) => {
+        let userData = snapshot.val();
+
+        if (!userData) {
+            alert("لم يتم العثور على هذا اللاعب مسجلاً في السحاب!");
+            return;
+        }
+
+        if (!userData.team || userData.team === "بدون فريق") {
+            alert("هذا اللاعب غير منضم إلى أي فريق حالياً!");
+            return;
+        }
+
+        const oldTeam = userData.team;
+
+        // تفريغ فريق اللاعب وإعادته إلى "بدون فريق" في السحاب
+        db.ref('users/' + targetUser + '/team').set("بدون فريق").then(() => {
+            alert(`تم طرد اللاعب ${targetUser} بنجاح من فريق ${oldTeam} ❌`);
+
+            // تحديث التخزين المحلي إن وجد
+            let users = JSON.parse(localStorage.getItem("naflAllUsers") || "[]");
+            let userObj = users.find(u => u.username.toLowerCase() === targetUser.toLowerCase());
+            if (userObj) {
+                userObj.team = "بدون فريق";
+                localStorage.setItem("naflAllUsers", JSON.stringify(users));
+            }
+
+            // مسح الحقل وإعادة تحميل تفاصيل الفريق
+            document.getElementById("kickTargetUser").value = "";
+            loadTeamDetails();
+        }).catch((err) => {
+            alert("حدث خطأ أثناء طرد اللاعب: " + err.message);
+        });
+    });
+}
