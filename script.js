@@ -496,101 +496,10 @@ function respondOffer(offerId, status, teamName) {
             let users = JSON.parse(localStorage.getItem("naflAllUsers") || "[]");
             let user = users.find(u => u.username === currentUserSession);
             if (user) {
-                user.team = teamName;
-                localStorage.setItem("naflAllUsers", JSON.stringify(users));
-            }
+                user.team = t
 
-            alert(`مبروك! انضممت بنجاح إلى فريق ${teamName} ⚽`);
-            loadUserData(currentUserSession);
-        } else {
-            alert("تم رفض العرض.");
-            let currentUserSession = localStorage.getItem("naflCurrentSession");
-            loadUserData(currentUserSession);
-        }
-    });
-}
-
-
-// ==========================================
-// 5. معلومات الفرق وإدارة الرولات
-// ==========================================
-function setupTeamSelect() {
-    const select = document.getElementById("selectTeamView");
-    if (!select) return;
-    select.innerHTML = "";
-    FIXED_TEAMS.forEach(team => {
-        const opt = document.createElement("option");
-        opt.value = team;
-        opt.innerText = team;
-        select.appendChild(opt);
-    });
-}
-
-function loadTeamDetails() {
-    const teamName = document.getElementById("selectTeamView").value;
-    
-    if (!db) return;
-
-    db.ref('users').once('value', (snapshot) => {
-        const usersData = snapshot.val() || {};
-        const teamPlayers = Object.values(usersData).filter(u => u.team === teamName);
-
-        let stats = JSON.parse(localStorage.getItem("naflTeamStats") || "{}");
-        let tStats = stats[teamName] || { scored: 0, conceded: 0 };
-
-        const box = document.getElementById("teamDetailsBox");
-        if (!box) return;
-
-        let playersHTML = teamPlayers.length > 0 ? teamPlayers.map(p => `<li>${p.username} (${p.role || 'Player'})</li>`).join('') : '<p style="color:#888;">لا يوجد لاعبون منضمون بعد.</p>';
-
-        box.innerHTML = `
-            <h3 style="color:#00ff87;">فريق: ${teamName}</h3>
-            <p><b>⚽ الأهداف المسجلة:</b> ${tStats.scored || 0}</p>
-            <p><b>🛡️ الأهداف المستقبلة:</b> ${tStats.conceded || 0}</p>
-            <h4 style="margin-top:10px;">قائمة اللاعبين في الفريق:</h4>
-            <ul style="text-align:right; padding-right:20px;">${playersHTML}</ul>
-        `;
-    });
-}
-
-function updateUserRole() {
-    const target = document.getElementById("targetUser").value.trim();
-    const newRole = document.getElementById("newRoleSelect").value;
-
-    if (!target) {
-        alert("يرجى كتابة اسم المستخدم!");
-        return;
-    }
-
-    if (typeof db === 'undefined' || !db) {
-        alert("خطأ: الاتصال بالسحاب غير مهيأ.");
-        return;
-    }
-
-    // تحديث الرول مباشرة في قاعدة بيانات Firebase السحابية للاعب المستهدف
-    db.ref('users/' + target).once('value', (snapshot) => {
-        let userData = snapshot.val();
-        
-        if (!userData) {
-            alert("لم يتم العثور على هذا المستخدم مسجلاً في السحاب!");
-            return;
-        }
-
-        // تحديث الرول في السحاب
-        db.ref('users/' + target + '/role').set(newRole).then(() => {
-            alert(`تم بنجاح تغيير رول اللاعب ${target} إلى ${newRole} 🛡️`);
-            
-            // تفريغ الحقل
-            document.getElementById("targetUser").value = "";
-        }).catch((error) => {
-            alert("حدث خطأ أثناء التحديث: " + error.message);
-        });
-    });
-}
-
-
-// ==========================================
-// دالة طرد لاعب من الفريق (خاصة برئيس الفريق فقط)
+              / ======================/====================
+// دالة طرد اللاعب (خاصة برئيس الفريق Owner [Team] حصراً)
 // ==========================================
 function kickPlayerFromTeam() {
     const targetUser = document.getElementById("kickTargetUser").value.trim();
@@ -611,22 +520,21 @@ function kickPlayerFromTeam() {
         return;
     }
 
-    // 1. جلب بيانات المستخدم الحالي (الذي يحاول الطرد) ومعرفة دوره وفريقه
+    // 1. جلب بيانات المستخدم الحالي (الذي يحاول الطرد) لمعرفة روله
     db.ref('users/' + currentSession).once('value', (snapshot) => {
         let currentUser = snapshot.val();
         if (!currentUser) return;
 
         let currentRole = currentUser.role || "";
-        let managedTeam = "";
+        let ownerTeamName = "";
 
-        // تحديد اسم الفريق الذي يمتلكه هذا الرئيس
-        // (إذا كان الرول مثلاً "Owner JSK" أو "Owner MCA")
+        // التحقق مما إذا كان رول المستخدم يبدأ بـ "Owner " (مثل Owner JSK, Owner MCA...)
         if (currentRole.startsWith("Owner ")) {
-            managedTeam = currentRole.replace("Owner ", "").trim();
+            ownerTeamName = currentRole.replace("Owner ", "").trim().toUpperCase();
         }
 
-        if (!managedTeam) {
-            alert("عذراً، هذه الصلاحية مخصصة لرؤساء الفرق فقط!");
+        if (!ownerTeamName) {
+            alert("عذراً، هذه الصلاحية مخصصة لرؤساء الفرق (Team Owners) فقط!");
             return;
         }
 
@@ -639,36 +547,25 @@ function kickPlayerFromTeam() {
                 return;
             }
 
-            if (!targetData.team || targetData.team === "بدون فريق") {
+            let playerTeam = (targetData.team || "").trim().toUpperCase();
+
+            if (!playerTeam || playerTeam === "بدون فريق") {
                 alert("هذا اللاعب غير منضم إلى أي فريق حالياً!");
                 return;
             }
 
-            // 3. التحقق من أن اللاعب المراد طرده ينتمي لنفس فريق الرئيس تماماً
-            if (targetData.team !== managedTeam) {
-                alert(`لا يمكنك طرد هذا اللاعب لأنه يلعب في فريق (${targetData.team}) وليس في فريقك (${managedTeam})!`);
+            // 3. التحقق الأهم: هل فريق اللاعب يطابق تماماً الفريق الذي يملكه هذا الـ Owner؟
+            if (playerTeam !== ownerTeamName) {
+                alert(`لا يمكنك طرد هذا اللاعب! لأنه يلعب في فريق (${targetData.team}) وأنت رئيس فريق (${ownerTeamName}) فقط.`);
                 return;
             }
 
-            // 4. تنفيذ الطرد وإزالة اللاعب من الفريق في السحاب
-            db.ref('users/' + targetUser + '/team').set("بدون فريق").then(() => {
-                alert(`تم طرد اللاعب ${targetUser} بنجاح من فريقك (${managedTeam}) ❌`);
-
-                // تحديث الذاكرة المحلية
-                let users = JSON.parse(localStorage.getItem("naflAllUsers") || "[]");
-                let userObj = users.find(u => u.username.toLowerCase() === targetUser.toLowerCase());
-                if (userObj) {
-                    userObj.team = "بدون فريق";
-                    localStorage.setItem("naflAllUsers", JSON.stringify(users));
-                }
-
+              
                 // مسح الحقل وتحديث تفاصيل الفريق
                 document.getElementById("kickTargetUser").value = "";
                 if (typeof loadTeamDetails === 'function') loadTeamDetails();
-            }).catch((err) => {
-                alert("حدث خطأ أثناء طرد اللاعب: " + err.message);
-            });
+            }).catched ? catch((err) => {
+                alert("حدث خطأ أثناء الطرد: " + err.message);
+            }) : null;
         });
     });
-}
-
