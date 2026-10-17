@@ -406,11 +406,28 @@ function updateUserRole() {
         return;
     }
 
-    if (db) {
-        db.ref('users/' + target + '/role').set(newRole).then(() => {
-            alert(`تم بنجاح تغيير رول اللاعب ${target} إلى ${newRole}`);
-        }).catch(err => {
-            alert("حدث خطأ: " + err.message);
-        });
+    if (typeof db === 'undefined' || !db) {
+        alert("خطأ: الاتصال بالسحاب غير مهيأ.");
+        return;
     }
+
+    // تحديث الرول مباشرة في قاعدة بيانات Firebase السحابية للاعب المستهدف
+    db.ref('users/' + target).once('value', (snapshot) => {
+        let userData = snapshot.val();
+        
+        if (!userData) {
+            alert("لم يتم العثور على هذا المستخدم مسجلاً في السحاب!");
+            return;
+        }
+
+        // تحديث الرول في السحاب
+        db.ref('users/' + target + '/role').set(newRole).then(() => {
+            alert(`تم بنجاح تغيير رول اللاعب ${target} إلى ${newRole} 🛡️`);
+            
+            // تفريغ الحقل
+            document.getElementById("targetUser").value = "";
+        }).catch((error) => {
+            alert("حدث خطأ أثناء التحديث: " + error.message);
+        });
+    });
 }
