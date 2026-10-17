@@ -436,6 +436,81 @@ function respondOffer(offerId, status, teamName) {
 }
 
 
+function loadMyInvites(username) {
+    const container = document.getElementById("myInvites");
+    if (!container) return;
+
+    if (typeof db === 'undefined' || !db) {
+        container.innerHTML = "<p style='color: #ff4444;'>خطأ في الاتصال بالسحاب.</p>";
+        return;
+    }
+
+    // جلب العروض الموجهة للمستخدم الحالي من السحاب مباشرة
+    db.ref('offers').once('value', (snapshot) => {
+        const offersData = snapshot.val();
+        if (!offersData) {
+            container.innerHTML = "<p style='color: #888;'>لا توجد عروض حالياً.</p>";
+            return;
+        }
+
+        let myOffers = [];
+        Object.values(offersData).forEach(offer => {
+            if (offer.to === username && offer.status === "pending") {
+                myOffers.push(offer);
+            }
+        });
+
+        if (myOffers.length === 0) {
+            container.innerHTML = "<p style='color: #888;'>لا توجد عروض حالياً.</p>";
+            return;
+        }
+
+        container.innerHTML = "";
+        myOffers.forEach((offer) => {
+            const box = document.createElement("div");
+            box.style.cssText = "background:#2b2b2b; padding:10px; margin:8px 0; border-radius:6px; text-align:right;";
+            box.innerHTML = `
+                عرض للانضمام إلى فريق: <b>${offer.fromTeam}</b> (مُرسل من: ${offer.from})<br>
+                <div style="margin-top:8px;">
+                    <button onclick="respondOffer('${offer.id}', 'accepted', '${offer.fromTeam}')" style="background:#00ff87; border:none; padding:5px 12px; font-weight:bold; cursor:pointer; color:#000; border-radius:4px; margin-left:5px;">قبول ✅</button>
+                    <button onclick="respondOffer('${offer.id}', 'rejected', '')" style="background:#ff4444; color:#fff; border:none; padding:5px 12px; cursor:pointer; border-radius:4px;">رفض ❌</button>
+                </div>
+            `;
+            container.appendChild(box);
+        });
+    });
+}
+
+function respondOffer(offerId, status, teamName) {
+    if (typeof db === 'undefined' || !db) return;
+
+    // تحديث حالة العرض في السحاب (accepted أو rejected)
+    db.ref('offers/' + offerId + '/status').set(status).then(() => {
+        if (status === 'accepted') {
+            let currentUserSession = localStorage.getItem("naflCurrentSession");
+            
+            // 1. تحديث فريق اللاعب في قاعدة البيانات السحابية
+            db.ref('users/' + currentUserSession + '/team').set(teamName);
+
+            // 2. تحديث الفريق محلياً لكي ينعكس فوراً في البروفايل
+            let users = JSON.parse(localStorage.getItem("naflAllUsers") || "[]");
+            let user = users.find(u => u.username === currentUserSession);
+            if (user) {
+                user.team = teamName;
+                localStorage.setItem("naflAllUsers", JSON.stringify(users));
+            }
+
+            alert(`مبروك! انضممت بنجاح إلى فريق ${teamName} ⚽`);
+            loadUserData(currentUserSession);
+        } else {
+            alert("تم رفض العرض.");
+            let currentUserSession = localStorage.getItem("naflCurrentSession");
+            loadUserData(currentUserSession);
+        }
+    });
+}
+
+
 // ==========================================
 // 5. معلومات الفرق وإدارة الرولات
 // ==========================================
