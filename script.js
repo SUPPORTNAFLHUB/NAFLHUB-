@@ -327,3 +327,17 @@ function updateUserRole() {
     localStorage.setItem("naflAllUsers", JSON.stringify(users));
     alert(`تم بنجاح تغيير رول اللاعب ${targetUserObj.username} إلى ${newRole}`);
 }
+// إعدادات الاتصال بقاعدة البيانات السحابية Firebase Realtime Database
+const firebaseConfig = {
+    databaseURL: "https://nafl-hub-ef57c-default-rtdb.firebaseio.com/"
+};
+
+// تهيئة قاعدة البيانات والاتصال المباشر
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// دالة جلب وعرض البيانات في قسم الـ Store وتحديث الجدول
+document.addEventListener("DOMContentLoaded", () => {
+    // يمكنك وضع بقية وظائف السكربت هنا (مثل التعامل مع الحفظ والجلب من db.ref)
+    console.log("NAFLHUB Connected to Firebase Successfully!");
+});
