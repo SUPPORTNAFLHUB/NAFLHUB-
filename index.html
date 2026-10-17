@@ -197,7 +197,11 @@
                 <!-- لوحة التحكم الإدارية (Owner / Staff) -->
                 <div id="adminPanel" style="display:none; margin-top:20px; border-top:1px solid #444; padding-top:15px; text-align:right;">
                     <h3 style="color:#00ff87;">🛠️ لوحة تحكم الإدارة (Owner/Staff)</h3>
-                    
+                                        <!-- 4. طرد لاعب من الفريق -->
+                    <h4 style="margin-top:20px; color:#ff4444;">🚫 طرد لاعب من الفريق:</h4>
+                    <input type="text" id="kickTargetUser" placeholder="اسم لاعب روبلوكس المرادطرده...">
+                    <button class="action-btn" onclick="kickPlayerFromTeam()" style="background:#ff4444; color:#fff;">طرد اللاعب من الفريق ❌</button>
+
                     <!-- 1. تعديل جدول الدوري مباشرة -->
                     <h4 style="margin-top:15px;">تعديل بيانات وإحصائيات الدوري (Table & Info):</h4>
                     <select id="editTeamSelect">
