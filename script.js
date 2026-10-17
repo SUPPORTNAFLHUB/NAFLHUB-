@@ -49,6 +49,33 @@ function firstLogin() {
     if (!username) {
         alert("يرجى كتابة اسم حسابك في روبلوكس!");
         return;
+      function searchPlayers() {
+    const searchInput = document.getElementById("playerSearch") || document.getElementById("searchInput") || document.querySelector("#store input");
+    const resultsDiv = document.getElementById("searchResults") || document.getElementById("storeResults");
+    
+    if (!resultsDiv) return;
+    resultsDiv.innerHTML = "";
+    
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
+    if (!query) return;
+
+    if (typeof db !== 'undefined') {
+        db.ref('users').once('value', (snapshot) => {
+            const usersData = snapshot.val();
+            if (!usersData) return;
+
+            Object.values(usersData).forEach(user => {
+                if (user.username && user.username.toLowerCase().includes(query)) {
+                    const div = document.createElement("div");
+                    div.style.cssText = "background: #2a2a2a; padding: 10px; margin: 5px 0; border-radius: 8px; color: #fff;";
+                    div.innerHTML = `<span>👤 <b>${user.username}</b> | الفريق: ${user.team || 'بدون فريق'}</span>`;
+                    resultsDiv.appendChild(div);
+                }
+            });
+        });
+    }
+}
+
     }
 
     checkSuperAdmin(username);
