@@ -35,28 +35,31 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 function firstLogin() {
-    const username = document.getElementById("robloxUser").value.trim();
+    const usernameInput = document.getElementById("usernameInput"); // تأكد من اسم الـ ID لديك
+    const username = usernameInput ? usernameInput.value.trim() : "";
+    
     if (!username) {
         alert("يرجى كتابة اسم حسابك في روبلوكس!");
         return;
     }
-
+    
     checkSuperAdmin(username);
 
-    let users = JSON.parse(localStorage.getItem("naflAllUsers") || "[]");
-    let existing = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    // حفظ المستخدم في قاعدة البيانات السحابية Firebase ليرى الجميع بعضهم
+    db.ref('users/' + username).set({
+        username: username,
+        role: "Member",
+        team: "",
+        joinedAt: Date.now()
+    });
 
-    if (!existing) {
-        const role = (username.toLowerCase() === "wassim1mouh") ? "Owner" : "Player";
-        existing = { username: username, role: role, team: "بدون فريق" };
-        users.push(existing);
-        localStorage.setItem("naflAllUsers", JSON.stringify(users));
-    }
-
+    // الحفظ المحلي والتوجيه لواجهة التطبيق
     localStorage.setItem("naflCurrentSession", username);
     document.getElementById("loginScreen").style.display = "none";
     document.getElementById("mainApp").style.display = "block";
     loadUserData(username);
+}
+
 }
 
 function switchTab(tabId, btn) {
@@ -185,46 +188,32 @@ function updateGameData() {
     localStorage.setItem("naflGamesData", JSON.stringify(games));
     alert("تم تحديث المباراة بنجاح! ⚽");
     loadGamesCards();
-}
-
-// البحث والعروض
-function searchPlayers() {
-    const query = document.getElementById("searchPlayerInput").value.toLowerCase().trim();
-    const resultsDiv = document.getElementById("searchResults");
+  function searchPlayers() {
+    const queryInput = document.getElementById("searchInput"); // ضع الـ ID الخاص بخانة البحث لديك
+    const resultsDiv = document.getElementById("searchResults"); // ضع الـ ID الخاص بمكان عرض النتائج
+    if (!resultsDiv) return;
+    
     resultsDiv.innerHTML = "";
-
+    const query = queryInput ? queryInput.value.trim().toLowerCase() : "";
+    
     if (!query) return;
 
-    let users = JSON.parse(localStorage.getItem("naflAllUsers") || "[]");
-    let currentUserSession = localStorage.getItem("naflCurrentSession");
-    let currentUser = users.find(u => u.username === currentUserSession);
+    // جلب المستخدمين مباشرة من قاعدة البيانات السحابية Firebase
+    db.ref('users').once('value', (snapshot) => {
+        const usersData = snapshot.val();
+        if (!usersData) return;
 
-    const matched = users.filter(u => u.username.toLowerCase().includes(query));
-
-    matched.forEach(u => {
-        const div = document.createElement("div");
-        div.style.cssText = "background:#262626; padding:10px; margin:8px 0; border-radius:6px; display:flex; justify-content:space-between; align-items:center;";
-        
-        let actionHTML = `<span class="badge">${u.role}</span>`;
-        let canInvite = false;
-        let myTeamName = "";
-
-        if (currentUser) {
-            if (["Owner", "Co-owner"].includes(currentUser.role)) {
-                canInvite = true;
-                myTeamName = "الإدارة العامة";
-            } else if (currentUser.role.startsWith("Owner ")) {
-                myTeamName = currentUser.role.replace("Owner ", "");
-                canInvite = true;
+        Object.values(usersData).forEach(user => {
+            if (user.username && user.username.toLowerCase().includes(query)) {
+                const div = document.createElement("div");
+                div.style.cssText = "background: #1e1e1e; padding: 10px; margin: 5px 0; border-radius: 5px; color: white;";
+                div.innerHTML = `<span>👤 ${user.username} - الفريق: ${user.team || 'بدون فريق'}</span>`;
+                resultsDiv.appendChild(div);
             }
-        }
+        });
+    });
+}
 
-        if (canInvite && u.username !== currentUser.username) {
-            actionHTML += `<button onclick="sendOffer('${u.username}', '${myTeamName}')" style="padding:5px 10px; background:#00ff87; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">إرسال عرض (${myTeamName}) 📩</button>`;
-        }
-
-        div.innerHTML = `<div><b>${u.username}</b> <small style="color:#aaa;">(${u.team})</small></div> <div>${actionHTML}</div>`;
-        resultsDiv.appendChild(div);
     });
 }
 
