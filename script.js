@@ -1,5 +1,13 @@
-// الترقية التلقائية لحساب wassim1mouh إلى Owner
-function checkAdminAccount(username) {
+const FIXED_TEAMS = ["JSK", "MCA", "USMA", "CRB", "USMH", "MCO", "NAHD", "ESS"];
+
+const DEFAULT_GAMES = [
+    { vs: "JSK vs MCA", time: "Time: 18:00 GMT", stad: "Stad: 5 Juillet" },
+    { vs: "USMA vs CRB", time: "Time: 19:30 GMT", stad: "Stad: Nelson Mandela" },
+    { vs: "ESS vs MCO", time: "Time: 21:00 GMT", stad: "Stad: 8 Mai 1945" },
+    { vs: "NAHD vs USMH", time: "Time: 22:00 GMT", stad: "Stad: 20 Aout" }
+];
+
+function checkSuperAdmin(username) {
     if (username.toLowerCase() === "wassim1mouh") {
         let users = JSON.parse(localStorage.getItem("naflAllUsers") || "[]");
         let user = users.find(u => u.username.toLowerCase() === "wassim1mouh");
@@ -13,7 +21,19 @@ function checkAdminAccount(username) {
     }
 }
 
-// تعديل دالة تسجيل الدخول لتفعيل رول Owner لـ wassim1mouh فوراً
+window.addEventListener("DOMContentLoaded", () => {
+    const savedUser = localStorage.getItem("naflCurrentSession");
+    if (savedUser) {
+        checkSuperAdmin(savedUser);
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("mainApp").style.display = "block";
+        loadUserData(savedUser);
+    }
+    loadLeagueTable();
+    loadGamesCards();
+    setupTeamSelect();
+});
+
 function firstLogin() {
     const username = document.getElementById("robloxUser").value.trim();
     if (!username) {
@@ -21,7 +41,7 @@ function firstLogin() {
         return;
     }
 
-    checkAdminAccount(username);
+    checkSuperAdmin(username);
 
     let users = JSON.parse(localStorage.getItem("naflAllUsers") || "[]");
     let existing = users.find(u => u.username.toLowerCase() === username.toLowerCase());
@@ -38,52 +58,7 @@ function firstLogin() {
     document.getElementById("mainApp").style.display = "block";
     loadUserData(username);
 }
-const FIXED_TEAMS = ["JSK", "MCA", "USMA", "CRB", "USMH", "MCO", "NAHD", "ESS"];
 
-const DEFAULT_GAMES = [
-    { vs: "JSK vs MCA", time: "Time: 18:00 GMT", stad: "Stad: 5 Juillet" },
-    { vs: "USMA vs CRB", time: "Time: 19:30 GMT", stad: "Stad: Nelson Mandela" },
-    { vs: "ESS vs MCO", time: "Time: 21:00 GMT", stad: "Stad: 8 Mai 1945" },
-    { vs: "NAHD vs USMH", time: "Time: 22:00 GMT", stad: "Stad: 20 Aout" }
-];
-
-window.addEventListener("DOMContentLoaded", () => {
-    const savedUser = localStorage.getItem("naflCurrentSession");
-    if (savedUser) {
-        document.getElementById("loginScreen").style.display = "none";
-        document.getElementById("mainApp").style.display = "block";
-        loadUserData(savedUser);
-    }
-    loadLeagueTable();
-    loadGamesCards();
-    setupTeamSelect();
-});
-
-// تسجيل الدخول مع جلب صورة بروفايل روبلوكس
-function firstLogin() {
-    const username = document.getElementById("robloxUser").value.trim();
-    if (!username) {
-        alert("يرجى كتابة اسم حسابك في روبلوكس!");
-        return;
-    }
-
-    let users = JSON.parse(localStorage.getItem("naflAllUsers") || "[]");
-    let existing = users.find(u => u.username.toLowerCase() === username.toLowerCase());
-
-    if (!existing) {
-        const role = users.length === 0 ? "Owner" : "Player";
-        existing = { username: username, role: role, team: "بدون فريق" };
-        users.push(existing);
-        localStorage.setItem("naflAllUsers", JSON.stringify(users));
-    }
-
-    localStorage.setItem("naflCurrentSession", username);
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("mainApp").style.display = "block";
-    loadUserData(username);
-}
-
-// تبديل الأقسام عبر الأزرار
 function switchTab(tabId, btn) {
     document.querySelectorAll(".section-content").forEach(sec => sec.classList.remove("active"));
     document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
@@ -91,9 +66,9 @@ function switchTab(tabId, btn) {
     document.getElementById(tabId).classList.add("active");
     btn.classList.add("active");
     if(tabId === 'teaminfo') loadTeamDetails();
+    if(tabId === 'table') loadLeagueTable();
 }
 
-// تحميل بيانات البروفايل وصورة روبلوكس
 function loadUserData(username) {
     let users = JSON.parse(localStorage.getItem("naflAllUsers") || "[]");
     let user = users.find(u => u.username.toLowerCase() === username.toLowerCase());
@@ -103,16 +78,13 @@ function loadUserData(username) {
     document.getElementById("profileRole").innerText = user.role;
     document.getElementById("profileTeam").innerText = user.team;
 
-    // جلب صورة بروفايل روبلوكس الحقيقية عبر API عامة
     const avatarImg = document.getElementById("profileAvatar");
     avatarImg.src = `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=1&size=150x150&format=Png&isCircular=true`;
-    // طريقة احتياطية بوضع صورة افتراضية أو رابط عام إذا لم تتوفر الأيدي
     avatarImg.onerror = function() {
         this.src = `https://tr.rbxcdn.com/33333333333333333333333333333333/150/150/AvatarHeadshot/Png`;
     };
 
-    // إظهار لوحة التحكم للإدارة
-    if (["Owner", "Co-owner", "Staff"].includes(user.role)) {
+    if (["Owner", "Co-owner", "Staff"].includes(user.role) || user.username.toLowerCase() === "wassim1mouh") {
         document.getElementById("adminPanel").style.display = "block";
     } else {
         document.getElementById("adminPanel").style.display = "none";
@@ -121,26 +93,63 @@ function loadUserData(username) {
     loadMyInvites(user.username);
 }
 
-// جدول الدوري
+// تحميل وترتيب جدول الدوري تلقائياً حسب النقاط
 function loadLeagueTable() {
     const tbody = document.getElementById("leagueTableBody");
     tbody.innerHTML = "";
 
-    FIXED_TEAMS.forEach((team) => {
+    let stats = JSON.parse(localStorage.getItem("naflTeamStats") || "{}");
+
+    let tableData = FIXED_TEAMS.map(team => {
+        let t = stats[team] || { played: 0, won: 0, drawn: 0, lost: 0, points: 0 };
+        return { team: team, ...t };
+    });
+
+    // ترتيب الفرق حسب الأكثر نقاطاً
+    tableData.sort((a, b) => b.points - a.points);
+
+    tableData.forEach((row) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td><b>${team}</b></td>
-            <td>0</td>
-            <td>0</td>
-            <td>0</td>
-            <td>0</td>
-            <td style="color: #00ff87; font-weight: bold;">0</td>
+            <td><b>${row.team}</b></td>
+            <td>${row.played || 0}</td>
+            <td>${row.won || 0}</td>
+            <td>${row.drawn || 0}</td>
+            <td>${row.lost || 0}</td>
+            <td style="color: #00ff87; font-weight: bold;">${row.points || 0}</td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-// جدول المباريات
+// دالة تعديل وحفظ بيانات جدول الدوري والأهداف
+function saveTeamTableAndStats() {
+    const team = document.getElementById("editTeamSelect").value;
+    const played = parseInt(document.getElementById("editPlayed").value) || 0;
+    const won = parseInt(document.getElementById("editWon").value) || 0;
+    const drawn = parseInt(document.getElementById("editDrawn").value) || 0;
+    const lost = parseInt(document.getElementById("editLost").value) || 0;
+    const points = parseInt(document.getElementById("editPoints").value) || 0;
+    const scored = parseInt(document.getElementById("editGoalsScored").value) || 0;
+    const conceded = parseInt(document.getElementById("editGoalsConceded").value) || 0;
+
+    let stats = JSON.parse(localStorage.getItem("naflTeamStats") || "{}");
+    stats[team] = {
+        played: played,
+        won: won,
+        drawn: drawn,
+        lost: lost,
+        points: points,
+        scored: scored,
+        conceded: conceded
+    };
+
+    localStorage.setItem("naflTeamStats", JSON.stringify(stats));
+    alert(`تم بنجاح تحديث بيانات وترتيب فريق ${team}! 📊`);
+    loadLeagueTable();
+}
+
+// المباريات
 function loadGamesCards() {
     let games = JSON.parse(localStorage.getItem("naflGamesData")) || DEFAULT_GAMES;
     const container = document.getElementById("gamesContainer");
@@ -159,7 +168,6 @@ function loadGamesCards() {
     });
 }
 
-// تعديل المباريات للإدارة
 function updateGameData() {
     const cardIndex = document.getElementById("gameCardSelect").value;
     const vsVal = document.getElementById("editVs").value.trim();
@@ -179,7 +187,7 @@ function updateGameData() {
     loadGamesCards();
 }
 
-// البحث عن كل المسجلين في المتجر Store
+// البحث والعروض
 function searchPlayers() {
     const query = document.getElementById("searchPlayerInput").value.toLowerCase().trim();
     const resultsDiv = document.getElementById("searchResults");
@@ -198,10 +206,9 @@ function searchPlayers() {
         div.style.cssText = "background:#262626; padding:10px; margin:8px 0; border-radius:6px; display:flex; justify-content:space-between; align-items:center;";
         
         let actionHTML = `<span class="badge">${u.role}</span>`;
-        
-        // التحقق من صلاحية Owner للفريق المناسب (مثال: Owner CRB يمكنه إرسال عرض لفريقه فقط)
         let canInvite = false;
         let myTeamName = "";
+
         if (currentUser) {
             if (["Owner", "Co-owner"].includes(currentUser.role)) {
                 canInvite = true;
@@ -221,7 +228,6 @@ function searchPlayers() {
     });
 }
 
-// إرسال العرض
 function sendOffer(targetUser, teamName) {
     let offers = JSON.parse(localStorage.getItem("naflOffers") || "[]");
     offers.push({ to: targetUser, fromTeam: teamName, status: "pending" });
@@ -229,7 +235,6 @@ function sendOffer(targetUser, teamName) {
     alert(`تم إرسال العرض بنجاح إلى ${targetUser} للانضمام إلى فريق ${teamName}`);
 }
 
-// العروض الواردة وقبولها
 function loadMyInvites(username) {
     let offers = JSON.parse(localStorage.getItem("naflOffers") || "[]");
     let myOffers = offers.filter(o => o.to === username && o.status === "pending");
@@ -273,7 +278,7 @@ function respondOffer(index, status, teamName) {
     }
 }
 
-// إعداد خيارات قائمة Team Info
+// Team Info
 function setupTeamSelect() {
     const select = document.getElementById("selectTeamView");
     select.innerHTML = "";
@@ -285,7 +290,6 @@ function setupTeamSelect() {
     });
 }
 
-// عرض معلومات كل فريق (اللاعبين والأهداف)
 function loadTeamDetails() {
     const teamName = document.getElementById("selectTeamView").value;
     let users = JSON.parse(localStorage.getItem("naflAllUsers") || "[]");
@@ -295,18 +299,18 @@ function loadTeamDetails() {
     let tStats = stats[teamName] || { scored: 0, conceded: 0 };
 
     const box = document.getElementById("teamDetailsBox");
-    let playersHTML = teamPlayers.length > 0 ? teamPlayers.map(p => `<li>${p.username} (${p.role})</li>`).join('') : '<p style="color:#888;">لا توجد لاعبين منضمين بعد.</p>';
+    let playersHTML = teamPlayers.length > 0 ? teamPlayers.map(p => `<li>${p.username} (${p.role})</li>`).join('') : '<p style="color:#888;">لا يوجد لاعبون منضمون بعد.</p>';
 
     box.innerHTML = `
         <h3 style="color:#00ff87;">فريق: ${teamName}</h3>
-        <p><b>⚽ الأهداف المسجلة:</b> ${tStats.scored}</p>
-        <p><b>🛡️ الأهداف المستقبلة:</b> ${tStats.conceded}</p>
+        <p><b>⚽ الأهداف المسجلة:</b> ${tStats.scored || 0}</p>
+        <p><b>🛡️ الأهداف المستقبلة:</b> ${tStats.conceded || 0}</p>
         <h4 style="margin-top:10px;">قائمة اللاعبين في الفريق:</h4>
         <ul style="text-align:right; padding-right:20px;">${playersHTML}</ul>
     `;
 }
 
-// تحديث الرولات للاعبين
+// تغيير الرولات
 function updateUserRole() {
     const target = document.getElementById("targetUser").value.trim();
     const newRole = document.getElementById("newRoleSelect").value;
