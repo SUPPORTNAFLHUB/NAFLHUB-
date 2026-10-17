@@ -11,7 +11,7 @@ const DEFAULT_GAMES = [
 ];
 
 // ==========================================
-// 2. التحقق وتسجيل الدخول (سريع ومضمون)
+// 2. التحقق وتسجيل الدخول
 // ==========================================
 function checkSuperAdmin(username) {
     if (username.toLowerCase() === "wassim1mouh") {
@@ -49,33 +49,6 @@ function firstLogin() {
     if (!username) {
         alert("يرجى كتابة اسم حسابك في روبلوكس!");
         return;
-      function searchPlayers() {
-    const searchInput = document.getElementById("playerSearch") || document.getElementById("searchInput") || document.querySelector("#store input");
-    const resultsDiv = document.getElementById("searchResults") || document.getElementById("storeResults");
-    
-    if (!resultsDiv) return;
-    resultsDiv.innerHTML = "";
-    
-    const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
-    if (!query) return;
-
-    if (typeof db !== 'undefined') {
-        db.ref('users').once('value', (snapshot) => {
-            const usersData = snapshot.val();
-            if (!usersData) return;
-
-            Object.values(usersData).forEach(user => {
-                if (user.username && user.username.toLowerCase().includes(query)) {
-                    const div = document.createElement("div");
-                    div.style.cssText = "background: #2a2a2a; padding: 10px; margin: 5px 0; border-radius: 8px; color: #fff;";
-                    div.innerHTML = `<span>👤 <b>${user.username}</b> | الفريق: ${user.team || 'بدون فريق'}</span>`;
-                    resultsDiv.appendChild(div);
-                }
-            });
-        });
-    }
-}
-
     }
 
     checkSuperAdmin(username);
@@ -90,7 +63,7 @@ function firstLogin() {
         existing = { username: username, role: role, team: team };
         users.push(existing);
     } else {
-        existing.role = role; // تحديث الدور إن وجد
+        existing.role = role;
     }
     
     localStorage.setItem("naflAllUsers", JSON.stringify(users));
@@ -237,7 +210,7 @@ function updateGameData() {
 }
 
 // ==========================================
-// 4. البحث عن اللاعبين المسجلين محلياً والعروض
+// 4. دالة البحث عن اللاعبين وإرسال العروض
 // ==========================================
 function searchPlayers() {
     const searchInput = document.getElementById("searchPlayerInput");
@@ -255,9 +228,14 @@ function searchPlayers() {
 
     const matched = users.filter(u => u.username.toLowerCase().includes(query));
 
+    if (matched.length === 0) {
+        resultsDiv.innerHTML = "<p style='color: #888; text-align: center;'>لم يتم العثور على أي لاعب بهذا الاسم.</p>";
+        return;
+    }
+
     matched.forEach(u => {
         const div = document.createElement("div");
-        div.style.cssText = "background:#262626; padding:10px; margin:8px 0; border-radius:6px; display:flex; justify-content:space-between; align-items:center;";
+        div.style.cssText = "background:#262626; padding:12px; margin:8px 0; border-radius:8px; display:flex; justify-content:space-between; align-items:center; text-align:right;";
         
         let actionHTML = `<span class="badge">${u.role || 'Player'}</span>`;
         let canInvite = false;
@@ -273,11 +251,17 @@ function searchPlayers() {
             }
         }
 
-        if (canInvite && currentUser && u.username !== currentUser.username) {
-            actionHTML += `<button onclick="sendOffer('${u.username}', '${myTeamName}')" style="padding:5px 10px; background:#00ff87; border:none; border-radius:4px; font-weight:bold; cursor:pointer; color:#000;">إرسال عرض (${myTeamName}) 📩</button>`;
+        if (canInvite && currentUser && u.username.toLowerCase() !== currentUser.username.toLowerCase()) {
+            actionHTML += `<button onclick="sendOffer('${u.username}', '${myTeamName}')" style="padding:6px 12px; background:#00ff87; border:none; border-radius:4px; font-weight:bold; cursor:pointer; color:#000; margin-right:8px;">إرسال عرض (${myTeamName}) 📩</button>`;
         }
 
-        div.innerHTML = `<div><b>👤 ${u.username}</b> <small style="color:#aaa;">(${u.team || 'بدون فريق'})</small></div> <div>${actionHTML}</div>`;
+        div.innerHTML = `
+            <div>
+                <b>👤 ${u.username}</b> 
+                <small style="color:#aaa; display:block; margin-top:3px;">الفريق: ${u.team || 'بدون فريق'}</small>
+            </div> 
+            <div>${actionHTML}</div>
+        `;
         resultsDiv.appendChild(div);
     });
 }
