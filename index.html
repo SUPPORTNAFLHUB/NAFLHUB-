@@ -15,7 +15,6 @@
         }
         h1, h2, h3, h4 { color: #00ff87; }
         
-        /* شريط الأزرار (أمام بعضها بشكل أفقي ومنظم) */
         .nav-bar {
             display: flex;
             justify-content: center;
@@ -43,7 +42,6 @@
             border-color: #00ff87;
         }
 
-        /* حاوية الأقسام */
         .section-content {
             display: none;
             max-width: 850px;
@@ -58,7 +56,6 @@
             display: block;
         }
 
-        /* المدخلات والأزرار */
         input, select {
             width: 100%;
             padding: 10px;
@@ -92,7 +89,6 @@
             color: #00ff87;
         }
 
-        /* صورة بروفايل روبلوكس */
         .roblox-avatar {
             width: 100px;
             height: 100px;
@@ -102,7 +98,6 @@
             margin-bottom: 10px;
         }
 
-        /* كروت المباريات */
         .games-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -119,6 +114,14 @@
         }
         .match-teams { font-size: 18px; font-weight: bold; color: #00ff87; margin-bottom: 8px; }
         .match-info { font-size: 14px; color: #ccc; margin: 4px 0; }
+        
+        .inputs-row {
+            display: flex;
+            gap: 5px;
+        }
+        .inputs-row input {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -135,7 +138,7 @@
     <!-- التطبيق الرئيسي -->
     <div id="mainApp" style="display: none;">
         
-        <!-- أزرار التنقل الرئيسية (أمام بعضها) -->
+        <!-- أزرار التنقل الرئيسية -->
         <div class="nav-bar">
             <button class="nav-btn active" onclick="switchTab('table', this)">Table</button>
             <button class="nav-btn" onclick="switchTab('games', this)">Games</button>
@@ -178,9 +181,7 @@
         <!-- 4. Team Info -->
         <div id="teaminfo" class="section-content">
             <h2>🛡️ معلومات وفريق الدوري</h2>
-            <select id="selectTeamView" onchange="loadTeamDetails()" style="margin-bottom: 15px;">
-                <!-- يتم تعبئتها بالفرق الثمانية تلقائياً -->
-            </select>
+            <select id="selectTeamView" onchange="loadTeamDetails()" style="margin-bottom: 15px;"></select>
             <div id="teamDetailsBox" style="background:#262626; padding:15px; border-radius:8px;"></div>
         </div>
 
@@ -193,12 +194,50 @@
                 <p><b>الرول الحالي:</b> <span id="profileRole" class="badge">Player</span></p>
                 <p><b>الفريق الحالي:</b> <span id="profileTeam">بدون فريق</span></p>
 
-                <!-- لوحة التحكم الإدارية -->
+                <!-- لوحة التحكم الإدارية (Owner / Staff) -->
                 <div id="adminPanel" style="display:none; margin-top:20px; border-top:1px solid #444; padding-top:15px; text-align:right;">
-                    <h3 style="color:#00ff87;">🛠️ لوحة تحكم الإدارة</h3>
+                    <h3 style="color:#00ff87;">🛠️ لوحة تحكم الإدارة (Owner/Staff)</h3>
                     
-                    <!-- تعديل الرولات -->
-                    <h4>تعيين رول للاعب:</h4>
+                    <!-- 1. تعديل جدول الدوري مباشرة -->
+                    <h4 style="margin-top:15px;">تعديل بيانات وإحصائيات الدوري (Table & Info):</h4>
+                    <select id="editTeamSelect">
+                        <option value="JSK">JSK</option>
+                        <option value="MCA">MCA</option>
+                        <option value="USMA">USMA</option>
+                        <option value="CRB">CRB</option>
+                        <option value="USMH">USMH</option>
+                        <option value="MCO">MCO</option>
+                        <option value="NAHD">NAHD</option>
+                        <option value="ESS">ESS</option>
+                    </select>
+                    <div class="inputs-row">
+                        <input type="number" id="editPlayed" placeholder="لعب">
+                        <input type="number" id="editWon" placeholder="فاز">
+                        <input type="number" id="editDrawn" placeholder="تعادل">
+                        <input type="number" id="editLost" placeholder="خسر">
+                        <input type="number" id="editPoints" placeholder="النقاط">
+                    </div>
+                    <div class="inputs-row">
+                        <input type="number" id="editGoalsScored" placeholder="أهداف له (Scored)">
+                        <input type="number" id="editGoalsConceded" placeholder="أهداف عليه (Conceded)">
+                    </div>
+                    <button class="action-btn" onclick="saveTeamTableAndStats()">حفظ ترتيب وإحصائيات الفريق 📊</button>
+
+                    <!-- 2. تعديل المباريات -->
+                    <h4 style="margin-top:20px;">تعديل المباريات (Games):</h4>
+                    <select id="gameCardSelect">
+                        <option value="0">المباراة الأولى (1)</option>
+                        <option value="1">المباراة الثانية (2)</option>
+                        <option value="2">المباراة الثالثة (3)</option>
+                        <option value="3">المباراة الرابعة (4)</option>
+                    </select>
+                    <input type="text" id="editVs" placeholder="مثال: JSK vs MCA">
+                    <input type="text" id="editTime" placeholder="مثال: Time: 20:00 GMT">
+                    <input type="text" id="editStad" placeholder="مثال: Stad: 5 Juillet">
+                    <button class="action-btn" onclick="updateGameData()">تحديث المباراة ⚽</button>
+
+                    <!-- 3. تعيين الرولات -->
+                    <h4 style="margin-top:20px;">تعيين رول للاعب:</h4>
                     <input type="text" id="targetUser" placeholder="اسم لاعب روبلوكس">
                     <select id="newRoleSelect">
                         <option value="Player">Player</option>
@@ -214,20 +253,7 @@
                         <option value="Owner ESS">Owner ESS</option>
                         <option value="Owner NAHD">Owner NAHD</option>
                     </select>
-                    <button class="action-btn" onclick="updateUserRole()">حفظ الرول</button>
-
-                    <!-- تعديل المباريات -->
-                    <h4 style="margin-top:20px;">تعديل المباريات (Games):</h4>
-                    <select id="gameCardSelect">
-                        <option value="0">المباراة الأولى (1)</option>
-                        <option value="1">المباراة الثانية (2)</option>
-                        <option value="2">المباراة الثالثة (3)</option>
-                        <option value="3">المباراة الرابعة (4)</option>
-                    </select>
-                    <input type="text" id="editVs" placeholder="مثال: JSK vs MCA">
-                    <input type="text" id="editTime" placeholder="مثال: Time: 20:00 GMT">
-                    <input type="text" id="editStad" placeholder="مثال: Stad: Camp Nou">
-                    <button class="action-btn" onclick="updateGameData()">تحديث المباراة</button>
+                    <button class="action-btn" onclick="updateUserRole()">حفظ الرول 👤</button>
                 </div>
 
                 <!-- العروض الواردة -->
@@ -240,6 +266,6 @@
 
     </div>
 
-    <script src="script.js?v=7"></script>
+    <script src="script.js?v=9"></script>
 </body>
 </html>
