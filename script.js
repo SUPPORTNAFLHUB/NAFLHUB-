@@ -100,6 +100,9 @@ function switchTab(tabId, btn) {
     if (tabId === 'games') loadGamesCards();
 }
 
+// ==========================================
+// تحديد صلاحيات لوحة التحكم (للـ Staff والـ Owner العام فقط)
+// ==========================================
 function loadUserData(username) {
     const profileName = document.getElementById("profileName");
     const profileRole = document.getElementById("profileRole");
@@ -112,7 +115,6 @@ function loadUserData(username) {
         avatarImg.src = `https://www.roblox.com/headshot-thumbnail/image?username=${encodeURIComponent(username)}&width=150&height=150&format=png`;
     }
 
-    // استخدام .on بدلاً من .once لكي يتحدث الرول والبروفايل فوراً وبدون تحديث الصفحة للجميع
     if (db) {
         db.ref('users/' + username).on('value', (snapshot) => {
             let user = snapshot.val() || { username: username, role: "Player", team: "بدون فريق" };
@@ -121,11 +123,37 @@ function loadUserData(username) {
             if (profileTeam) profileTeam.innerText = user.team || "بدون فريق";
 
             const adminPanel = document.getElementById("adminPanel");
+            const generalAdminBox = document.getElementById("generalAdminBox");
+            const ownerKickBox = document.getElementById("ownerKickBox");
+
             if (adminPanel) {
-                let r = user.role || "";
-                if (["Owner", "Co-owner", "Staff"].includes(r) || r.startsWith("Owner ") || username.toLowerCase() === "wassim1mouh") {
-                    adminPanel.style.display = "block";
+                let r = (user.role || "").trim().toLowerCase();
+                let currentName = username.toLowerCase();
+
+                // هل المستخدم هو Staff أو Owner عام أو الأونر الأساسي؟
+                let isStaffOrGeneralOwner = 
+                    r === "staff" || 
+                    r === "owner" || 
+                    currentName === "wassim1mouh";
+
+                // هل المستخدم رئيس فريق فقط (مثل Owner JSK)؟
+                let isTeamOwnerOnly = r.startsWith("owner ") && r !== "owner";
+
+                if (isStaffOrGeneralOwner || isTeamOwnerOnly) {
+                    adminPanel.style.display = "block"; // إظهار اللوحة الأساسية
+
+                    // إذا كان Staff أو Owner (العام): تظهر له جميع خانات الإدارة والجدول والرولات والطرد
+                    if (isStaffOrGeneralOwner) {
+                        if (generalAdminBox) generalAdminBox.style.display = "block";
+                        if (ownerKickBox) ownerKickBox.style.display = "block";
+                    } 
+                    // إذا كان رئيس فريق فقط: تختفي عنه خانات الجدول والرولات، ويظهر له طرد لاعبي فريقه فقط
+                    else if (isTeamOwnerOnly) {
+                        if (generalAdminBox) generalAdminBox.style.display = "none";
+                        if (ownerKickBox) ownerKickBox.style.display = "block";
+                    }
                 } else {
+                    // اللاعب العادي لا يرى أي لوحة تحكم
                     adminPanel.style.display = "none";
                 }
             }
