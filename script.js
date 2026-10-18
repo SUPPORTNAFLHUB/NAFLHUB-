@@ -296,8 +296,9 @@ function loadTeamDetails() {
     }
 }
 
+
 // ==========================================
-// 5. البحث والعروض وطرد اللاعبين والتحديثات
+// 5. البحث والشامل عن اللاعبين (النسخة المُحدثة)
 // ==========================================
 function searchPlayers() {
     const searchInput = document.getElementById("searchPlayerInput");
@@ -307,15 +308,34 @@ function searchPlayers() {
     resultsDiv.innerHTML = "";
     const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
 
-    if (!query || !db) return;
+    if (!db) return;
 
     db.ref('users').once('value', (snapshot) => {
         const usersData = snapshot.val() || {};
-        let currentUserSession = localStorage.getItem("naflCurrentSession");
-        let usersArray = Object.values(usersData);
-        let currentUser = usersArray.find(u => u.username === currentUserSession);
+        let currentUserSession = (localStorage.getItem("naflCurrentSession") || "").toLowerCase();
+        
+        // تحويل قاعدة البيانات لضمان قراءة كافة الحسابات والمفاتيح مهما كانت طريقة تخزينها
+        let usersArray = Object.keys(usersData).map(key => {
+            let val = usersData[key];
+            if (typeof val === 'object' && val !== null) {
+                return {
+                    dbKey: key,
+                    username: val.username || val.name || key,
+                    role: val.role || 'Player',
+                    team: val.team || 'بدون فريق'
+                };
+            }
+            return { dbKey: key, username: key, role: 'Player', team: 'بدون فريق' };
+        });
 
-        const matched = usersArray.filter(u => u.username && u.username.toLowerCase().includes(query));
+        let currentUser = usersArray.find(u => u.username.toLowerCase() === currentUserSession);
+
+        // التصفية: إذا كانت خانة البحث فارغة، يتم عرض جميع اللاعبين المسجلين تلقائياً
+        const matched = usersArray.filter(u => {
+            if (!u.username) return false;
+            if (query === "") return true; // عرض الكل
+            return u.username.toLowerCase().includes(query);
+        });
 
         if (matched.length === 0) {
             resultsDiv.innerHTML = "<p style='color: #888; text-align: center;'>لم يتم العثور على أي لاعب.</p>";
@@ -326,16 +346,17 @@ function searchPlayers() {
             const div = document.createElement("div");
             div.style.cssText = "background:#262626; padding:12px; margin:8px 0; border-radius:8px; display:flex; justify-content:space-between; align-items:center; text-align:right;";
             
-            let actionHTML = `<span class="badge">${u.role || 'Player'}</span>`;
+            let actionHTML = `<span class="badge">${u.role}</span>`;
             let canInvite = false;
             let myTeamName = "";
 
             if (currentUser) {
-                if (["Owner", "Co-owner"].includes(currentUser.role)) {
+                let cRole = (currentUser.role || "").trim();
+                if (["Owner", "Co-owner"].includes(cRole) || cRole.toLowerCase() === "wassim1mouh") {
                     canInvite = true;
                     myTeamName = "الإدارة";
-                } else if (currentUser.role && currentUser.role.startsWith("Owner ")) {
-                    myTeamName = currentUser.role.replace("Owner ", "").trim();
+                } else if (cRole.startsWith("Owner ")) {
+                    myTeamName = cRole.replace("Owner ", "").trim();
                     canInvite = true;
                 }
             }
@@ -347,7 +368,7 @@ function searchPlayers() {
             div.innerHTML = `
                 <div>
                     <b>👤 ${u.username}</b> 
-                    <small style="color:#aaa; display:block; margin-top:3px;">الفريق: ${u.team || 'بدون فريق'}</small>
+                    <small style="color:#aaa; display:block; margin-top:3px;">الفريق: ${u.team}</small>
                 </div> 
                 <div>${actionHTML}</div>
             `;
@@ -426,32 +447,48 @@ function respondOffer(offerId, status, teamName) {
     });
 }
 
+// ==========================================
+// تحديث وإعطاء الرول مباشرة وبدون أخطاء
+// ==========================================
 function updateUserRole() {
-    const target = document.getElementById("targetUser").value.trim();
-    const newRole = document.getElementById("newRoleSelect").value;
+    const targetInput = document.getElementById("targetUser");
+    const target = targetInput ? targetInput.value.trim() : "";
+    const roleSelect = document.getElementById("newRoleSelect");
+    const newRole = roleSelect ? roleSelect.value : "Player";
 
     if (!target) {
-        alert("يرجى كتابة اسم المستخدم!");
+        alert("يرجى كتابة اسم المستخدم (حساب روبلوكس) أولاً!");
         return;
     }
 
-    if (db) {
-        // تحديث الرول والفريق تلقائياً إذا كان الرول يبدأ بـ Owner [Team]
-        let teamUpdate = "بدون فريق";
-        if (newRole.startsWith("Owner ")) {
-            teamUpdate = newRole.replace("Owner ", "").trim();
-        }
-
-        db.ref('users/' + target).update({
-            role: newRole,
-            team: teamUpdate !== "بدون فريق" ? teamUpdate : undefined
-        }).then(() => {
-            alert(`تم بنجاح تعيين الرول (${newRole}) للاعب ${target} وتحديث بياناته سحابياً! 👤`);
-            document.getElementById("targetUser").value = "";
-        }).catch(err => {
-            alert("حدث خطأ: " + err.message);
-        });
+    if (typeof db === 'undefined' || !db) {
+        alert("خطأ: الاتصال بقاعدة البيانات السحابية غير متاح.");
+        return;
     }
+
+    // تحديد الفريق تلقائياً إذا كان الرول هو Owner [Team]
+    let teamUpdate = "بدون فريق";
+    if (newRole.startsWith("Owner ")) {
+        teamUpdate = newRole.replace("Owner ", "").trim();
+    }
+
+    // تجهيز البيانات المراد تحديثها أو إضافتها
+    let userData = {
+        username: target,
+        role: newRole
+    };
+    
+    if (teamUpdate !== "بدون فريق") {
+        userData.team = teamUpdate;
+    }
+
+    // التحديث المباشر في السحاب (يحدث أو ينشئ الحساب فوراً)
+    db.ref('users/' + target).update(userData).then(() => {
+        alert(`تم بنجاح تعيين الرول (${newRole}) للاعب "${target}" سحابياً! 👤✨`);
+        if (targetInput) targetInput.value = "";
+    }).catch((error) => {
+        alert("حدث خطأ أثناء حفظ الرول: " + error.message);
+    });
 }
 
 
