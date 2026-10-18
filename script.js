@@ -741,3 +741,58 @@ function loadGamesCards() {
         targetDiv.innerHTML = html;
     });
 }
+
+function saveMatchCard() {
+    const homeInput = document.getElementById("matchHomeTeam");
+    const awayInput = document.getElementById("matchAwayTeam");
+    const scoreInput = document.getElementById("matchScore");
+    const timeInput = document.getElementById("matchTime");
+    const statusInput = document.getElementById("matchStatus");
+    const roundInput = document.getElementById("matchRound");
+
+    if (!homeInput || !awayInput) {
+        alert("خطأ: لم يتم العثور على حقول الإدخال في الصفحة!");
+        return;
+    }
+
+    const home = homeInput.value.trim();
+    const away = awayInput.value.trim();
+    const score = scoreInput.value.trim() || "0 - 0";
+    const time = timeInput.value.trim() || "20:00";
+    const status = statusInput ? statusInput.value : "قريباً ⏳";
+    const round = roundInput ? roundInput.value.trim() : "الجولة 1";
+
+    if (!home || !away) {
+        alert("يرجى كتابة اسم الفريقين على الأقل!");
+        return;
+    }
+
+    if (typeof db === "undefined" || !db) {
+        alert("خطأ: الاتصال بقاعدة البيانات غير متعرف عليه!");
+        return;
+    }
+
+    // معرف فريد للمباراة
+    const matchId = `${home}_vs_${away}`.replace(/\s+/g, '_');
+
+    db.ref('matches/' + matchId).set({
+        homeTeam: home,
+        awayTeam: away,
+        score: score,
+        time: time,
+        status: status,
+        round: round,
+        updatedAt: Date.now()
+    }).then(() => {
+        alert("تم حفظ وتحديث بيانات المباراة بنجاح! ⚽");
+        homeInput.value = "";
+        awayInput.value = "";
+        scoreInput.value = "";
+        timeInput.value = "";
+        if (typeof loadGamesCards === "function") {
+            loadGamesCards();
+        }
+    }).catch(err => {
+        alert("حدث خطأ أثناء الحفظ في قاعدة البيانات: " + err.message);
+    });
+}
