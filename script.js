@@ -569,3 +569,175 @@ function kickPlayerFromTeam() {
         });
     });
 }
+
+// ==========================================
+// 1. حفظ وتحديث المباريات في Firebase
+// ==========================================
+function saveMatchCard() {
+    const home = document.getElementById("matchHomeTeam") ? document.getElementById("matchHomeTeam").value.trim() : "";
+    const away = document.getElementById("matchAwayTeam") ? document.getElementById("matchAwayTeam").value.trim() : "";
+    const score = document.getElementById("matchScore") ? document.getElementById("matchScore").value.trim() : "0 - 0";
+    const time = document.getElementById("matchTime") ? document.getElementById("matchTime").value.trim() : "20:00";
+    const status = document.getElementById("matchStatus") ? document.getElementById("matchStatus").value : "قريباً ⏳";
+    const round = document.getElementById("matchRound") ? document.getElementById("matchRound").value.trim() : "الجولة 1";
+
+    if (!home || !away) {
+        alert("يرجى كتابة اسم الفريقين على الأقل!");
+        return;
+    }
+
+    if (!db) {
+        alert("خطأ في الاتصال بقاعدة البيانات!");
+        return;
+    }
+
+    // معرف فريد للمباراة بناءً على الفريقين
+    const matchId = `${home}_vs_${away}`.replace(/\s+/g, '_');
+
+    db.ref('matches/' + matchId).set({
+        homeTeam: home,
+        awayTeam: away,
+        score: score,
+        time: time,
+        status: status,
+        round: round,
+        updatedAt: Date.now()
+    }).then(() => {
+        alert("تم حفظ وتحديث بيانات المباراة بنجاح! ⚽");
+        // إعادة تفريغ الحقول
+        document.getElementById("matchHomeTeam").value = "";
+        document.getElementById("matchAwayTeam").value = "";
+        document.getElementById("matchScore").value = "";
+        document.getElementById("matchTime").value = "";
+    }).catch(err => {
+        alert("حدث خطأ أثناء الحفظ: " + err.message);
+    });
+}
+
+// ==========================================
+// 2. تحميل وعرض كروت المباريات في تبويب Games
+// ==========================================
+function loadGamesCards() {
+    const gamesContainer = document.getElementById("gamesContainer") || document.getElementById("games");
+    if (!gamesContainer || !db) return;
+
+    db.ref('matches').on('value', (snapshot) => {
+        const matchesData = snapshot.val();
+        
+        // العثور على مكان عرض الكروت داخل التبويب
+        let targetDiv = gamesContainer.querySelector('.games-list') || gamesContainer;
+        
+        if (!matchesData) {
+            targetDiv.innerHTML = "<p style='color:#888; text-align:center; padding:20px;'>لا توجد مباريات مسجلة حالياً.</p>";
+            return;
+        }
+
+        let html = "";
+        Object.keys(matchesData).forEach(key => {
+            let m = matchesData[key];
+            let statusColor = m.status.includes("مباشر") ? "#ff4444" : (m.status.includes("انتهت") ? "#888" : "#00ff87");
+
+            html += `
+                <div style="background:#222; border:1px solid #333; border-radius:10px; padding:15px; margin:12px 0; text-align:center; position:relative;">
+                    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">${m.round || 'مباراة'} • <span style="color:${statusColor}; font-weight:bold;">${m.status}</span></div>
+                    
+                    <div style="display:flex; justify-content:space-around; align-items:center; font-size:18px; font-weight:bold;">
+                        <span style="flex:1;">${m.homeTeam}</span>
+                        <span style="background:#111; padding:6px 14px; border-radius:6px; color:#00ff87; letter-spacing:2px; margin:0 10px;">${m.score}</span>
+                        <span style="flex:1;">${m.awayTeam}</span>
+                    </div>
+                    
+                    <div style="font-size:12px; color:#888; margin-top:10px;">⏰ التوقيت: ${m.time}</div>
+                </div>
+            `;
+        });
+
+        targetDiv.innerHTML = html;
+    });
+}
+
+// ==========================================
+// 1. حفظ وتحديث المباريات في Firebase
+// ==========================================
+function saveMatchCard() {
+    const home = document.getElementById("matchHomeTeam") ? document.getElementById("matchHomeTeam").value.trim() : "";
+    const away = document.getElementById("matchAwayTeam") ? document.getElementById("matchAwayTeam").value.trim() : "";
+    const score = document.getElementById("matchScore") ? document.getElementById("matchScore").value.trim() : "0 - 0";
+    const time = document.getElementById("matchTime") ? document.getElementById("matchTime").value.trim() : "20:00";
+    const status = document.getElementById("matchStatus") ? document.getElementById("matchStatus").value : "قريباً ⏳";
+    const round = document.getElementById("matchRound") ? document.getElementById("matchRound").value.trim() : "الجولة 1";
+
+    if (!home || !away) {
+        alert("يرجى كتابة اسم الفريقين على الأقل!");
+        return;
+    }
+
+    if (!db) {
+        alert("خطأ في الاتصال بقاعدة البيانات!");
+        return;
+    }
+
+    // معرف فريد للمباراة بناءً على الفريقين
+    const matchId = `${home}_vs_${away}`.replace(/\s+/g, '_');
+
+    db.ref('matches/' + matchId).set({
+        homeTeam: home,
+        awayTeam: away,
+        score: score,
+        time: time,
+        status: status,
+        round: round,
+        updatedAt: Date.now()
+    }).then(() => {
+        alert("تم حفظ وتحديث بيانات المباراة بنجاح! ⚽");
+        // إعادة تفريغ الحقول
+        document.getElementById("matchHomeTeam").value = "";
+        document.getElementById("matchAwayTeam").value = "";
+        document.getElementById("matchScore").value = "";
+        document.getElementById("matchTime").value = "";
+    }).catch(err => {
+        alert("حدث خطأ أثناء الحفظ: " + err.message);
+    });
+}
+
+// ==========================================
+// 2. تحميل وعرض كروت المباريات في تبويب Games
+// ==========================================
+function loadGamesCards() {
+    const gamesContainer = document.getElementById("gamesContainer") || document.getElementById("games");
+    if (!gamesContainer || !db) return;
+
+    db.ref('matches').on('value', (snapshot) => {
+        const matchesData = snapshot.val();
+        
+        // العثور على مكان عرض الكروت داخل التبويب
+        let targetDiv = gamesContainer.querySelector('.games-list') || gamesContainer;
+        
+        if (!matchesData) {
+            targetDiv.innerHTML = "<p style='color:#888; text-align:center; padding:20px;'>لا توجد مباريات مسجلة حالياً.</p>";
+            return;
+        }
+
+        let html = "";
+        Object.keys(matchesData).forEach(key => {
+            let m = matchesData[key];
+            let statusColor = m.status.includes("مباشر") ? "#ff4444" : (m.status.includes("انتهت") ? "#888" : "#00ff87");
+
+            html += `
+                <div style="background:#222; border:1px solid #333; border-radius:10px; padding:15px; margin:12px 0; text-align:center; position:relative;">
+                    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">${m.round || 'مباراة'} • <span style="color:${statusColor}; font-weight:bold;">${m.status}</span></div>
+                    
+                    <div style="display:flex; justify-content:space-around; align-items:center; font-size:18px; font-weight:bold;">
+                        <span style="flex:1;">${m.homeTeam}</span>
+                        <span style="background:#111; padding:6px 14px; border-radius:6px; color:#00ff87; letter-spacing:2px; margin:0 10px;">${m.score}</span>
+                        <span style="flex:1;">${m.awayTeam}</span>
+                    </div>
+                    
+                    <div style="font-size:12px; color:#888; margin-top:10px;">⏰ التوقيت: ${m.time}</div>
+                </div>
+            `;
+        });
+
+        targetDiv.innerHTML = html;
+    });
+}
