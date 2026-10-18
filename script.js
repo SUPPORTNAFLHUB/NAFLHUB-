@@ -298,112 +298,13 @@ function searchPlayers() {
     });
 }
 
-// ==========================================
-// نظام العروض والدعوات السحابي المباشر
-// ==========================================
-
 function sendOffer(targetUser, teamName) {
-    let currentSession = localStorage.getItem("naflCurrentSession");
-    if (!currentSession) {
-        alert("يرجى تسجيل الدخول أولاً!");
-        return;
-    }
-
-    if (typeof db === 'undefined' || !db) {
-        alert("خطأ في الاتصال بالسحاب.");
-        return;
-    }
-
-    // إنشاء مفتاح فريد للعرض وحفظه في سحاب Firebase ليراه اللاعب فوراً
-    const offerRef = db.ref('offers').push();
-    offerRef.set({
-        id: offerRef.key,
-        to: targetUser,
-        from: currentSession,
-        fromTeam: teamName,
-        status: "pending",
-        timestamp: Date.now()
-    }).then(() => {
-        alert(`تم إرسال العرض بنجاح إلى اللاعب ${targetUser} للانضمام إلى فريق ${teamName} 📩`);
-    }).catch((err) => {
-        alert("حدث خطأ أثناء إرسال العرض: " + err.message);
-    });
+    let offers = JSON.parse(localStorage.getItem("naflOffers") || "[]");
+    offers.push({ to: targetUser, fromTeam: teamName, status: "pending" });
+    localStorage.setItem("naflOffers", JSON.stringify(offers));
+    alert(`تم إرسال العرض بنجاح إلى ${targetUser} للانضمام إلى فريق ${teamName}`);
 }
 
-function loadMyInvites(username) {
-    const container = document.getElementById("myInvites");
-    if (!container) return;
-
-    if (typeof db === 'undefined' || !db) {
-        container.innerHTML = "<p style='color: #ff4444;'>خطأ في الاتصال بالسحاب.</p>";
-        return;
-    }
-
-    // جلب العروض الموجهة للمستخدم الحالي من السحاب مباشرة
-    db.ref('offers').once('value', (snapshot) => {
-        const offersData = snapshot.val();
-        if (!offersData) {
-            container.innerHTML = "<p style='color: #888;'>لا توجد عروض حالياً.</p>";
-            return;
-        }
-
-        let myOffers = [];
-        Object.values(offersData).forEach(offer => {
-            if (offer.to === username && offer.status === "pending") {
-                myOffers.push(offer);
-            }
-        });
-
-        if (myOffers.length === 0) {
-            container.innerHTML = "<p style='color: #888;'>لا توجد عروض حالياً.</p>";
-            return;
-        }
-
-        container.innerHTML = "";
-        myOffers.forEach((offer) => {
-            const box = document.createElement("div");
-            box.style.cssText = "background:#2b2b2b; padding:10px; margin:8px 0; border-radius:6px; text-align:right;";
-            box.innerHTML = `
-                عرض للانضمام إلى فريق: <b>${offer.fromTeam}</b> (مُرسل من: ${offer.from})<br>
-                <div style="margin-top:8px;">
-                    <button onclick="respondOffer('${offer.id}', 'accepted', '${offer.fromTeam}')" style="background:#00ff87; border:none; padding:5px 12px; font-weight:bold; cursor:pointer; color:#000; border-radius:4px; margin-left:5px;">قبول ✅</button>
-                    <button onclick="respondOffer('${offer.id}', 'rejected', '')" style="background:#ff4444; color:#fff; border:none; padding:5px 12px; cursor:pointer; border-radius:4px;">رفض ❌</button>
-                </div>
-            `;
-            container.appendChild(box);
-        });
-    });
-}
-
-function respondOffer(offerId, status, teamName) {
-    if (typeof db === 'undefined' || !db) return;
-
-    // تحديث حالة العرض في السحاب (accepted أو rejected)
-    db.ref('offers/' + offerId + '/status').set(status).then(() => {
-        if (status === 'accepted') {
-            let currentUserSession = localStorage.getItem("naflCurrentSession");
-            
-            // 1. تحديث فريق اللاعب في قاعدة البيانات السحابية
-            db.ref('users/' + currentUserSession + '/team').set(teamName);
-
-            // 2. تحديث الفريق محلياً لكي ينعكس فوراً في البروفايل
-            let users = JSON.parse(localStorage.getItem("naflAllUsers") || "[]");
-            let user = users.find(u => u.username === currentUserSession);
-            if (user) {
-                user.team = teamName;
-                localStorage.setItem("naflAllUsers", JSON.stringify(users));
-            }
-
-            alert(`مبروك! انضممت بنجاح إلى فريق ${teamName} ⚽`);
-            loadUserData(currentUserSession);
-        } else {
-            alert("تم رفض العرض.");
-            let currentUserSession = localStorage.getItem("naflCurrentSession");
-            loadUserData(currentUserSession);
-        }
-    });
-}
-          
 function loadMyInvites(username) {
     let offers = JSON.parse(localStorage.getItem("naflOffers") || "[]");
     let myOffers = offers.filter(o => o.to === username && o.status === "pending");
@@ -505,109 +406,73 @@ function updateUserRole() {
         return;
     }
 
-    if (typeof db === 'undefined' || !db) {
-        alert("خطأ: الاتصال بالسحاب غير مهيأ.");
-        return;
-    }
-
-    // تحديث الرول مباشرة في قاعدة بيانات Firebase السحابية للاعب المستهدف
-    db.ref('users/' + target).once('value', (snapshot) => {
-        let userData = snapshot.val();
-        
-        if (!userData) {
-            alert("لم يتم العثور على هذا المستخدم مسجلاً في السحاب!");
-            return;
-        }
-
-        // تحديث الرول في السحاب
+    if (db) {
         db.ref('users/' + target + '/role').set(newRole).then(() => {
-            alert(`تم بنجاح تغيير رول اللاعب ${target} إلى ${newRole} 🛡️`);
-            
-            // تفريغ الحقل
-            document.getElementById("targetUser").value = "";
-        }).catch((error) => {
-            alert("حدث خطأ أثناء التحديث: " + error.message);
+            alert(`تم بنجاح تغيير رول اللاعب ${target} إلى ${newRole}`);
+        }).catch(err => {
+            alert("حدث خطأ: " + err.message);
         });
+    }
+  
+}// ==========================================
+// دالة البحث عن اللاعبين وإرسال العروض
+// ==========================================
+function searchPlayers() {
+    const searchInput = document.getElementById("searchPlayerInput");
+    const resultsDiv = document.getElementById("searchResults");
+    if (!resultsDiv) return;
+    
+    resultsDiv.innerHTML = "";
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+    if (!query) return;
+
+    // جلب جميع المستخدمين المسجلين من الذاكرة المحلية
+    let users = JSON.parse(localStorage.getItem("naflAllUsers") || "[]");
+    let currentUserSession = localStorage.getItem("naflCurrentSession");
+    let currentUser = users.find(u => u.username === currentUserSession);
+
+    // تصفية اللاعبين بناءً على ما كتبه المستخدم في خانة البحث
+    const matched = users.filter(u => u.username.toLowerCase().includes(query));
+
+    if (matched.length === 0) {
+        resultsDiv.innerHTML = "<p style='color: #888; text-align: center;'>لم يتم العثور على أي لاعب بهذا الاسم.</p>";
+        return;
+    }
+
+    matched.forEach(u => {
+        const div = document.createElement("div");
+        div.style.cssText = "background:#262626; padding:12px; margin:8px 0; border-radius:8px; display:flex; justify-content:space-between; align-items:center; text-align:right;";
+        
+        let actionHTML = `<span class="badge">${u.role || 'Player'}</span>`;
+        let canInvite = false;
+        let myTeamName = "";
+
+        // التحقق مما إذا كان المستخدم الحالي مديراً أو مالك فريق لإرسال دعوة انضمام
+        if (currentUser) {
+            if (["Owner", "Co-owner"].includes(currentUser.role)) {
+                canInvite = true;
+                myTeamName = "الإدارة العامة";
+            } else if (currentUser.role && currentUser.role.startsWith("Owner ")) {
+                myTeamName = currentUser.role.replace("Owner ", "");
+                canInvite = true;
+            }
+        }
+
+        // إضافة زر إرسال العرض إذا توفرت الصلاحية ولم يكن اللاعب يبحث عن نفسه
+        if (canInvite && currentUser && u.username.toLowerCase() !== currentUser.username.toLowerCase()) {
+            actionHTML += `<button onclick="sendOffer('${u.username}', '${myTeamName}')" style="padding:6px 12px; background:#00ff87; border:none; border-radius:4px; font-weight:bold; cursor:pointer; color:#000; margin-right:8px;">إرسال عرض (${myTeamName}) 📩</button>`;
+        }
+
+        div.innerHTML = `
+            <div>
+                <b>👤 ${u.username}</b> 
+                <small style="color:#aaa; display:block; margin-top:3px;">الفريق: ${u.team || 'بدون فريق'}</small>
+            </div> 
+            <div>${actionHTML}</div>
+        `;
+        resultsDiv.appendChild(div);
     });
 }
 
-// ==========================================
-// دالة طرد لاعب من الفريق (خاصة برئيس الفريق Owner [Team] حصراً)
-// ==========================================
-function kickPlayerFromTeam() {
-    const targetInput = document.getElementById("kickTargetUser");
-    const targetUser = targetInput ? targetInput.value.trim() : "";
 
-    if (!targetUser) {
-        alert("يرجى كتابة اسم اللاعب المراد طرده!");
-        return;
-    }
-
-    if (typeof db === 'undefined' || !db) {
-        alert("خطأ: الاتصال بالسحاب غير مهيأ.");
-        return;
-    }
-
-    let currentSession = localStorage.getItem("naflCurrentSession");
-    if (!currentSession) {
-        alert("يرجى تسجيل الدخول أولاً!");
-        return;
-    }
-
-    // 1. جلب بيانات رئيس الفريق الذي يضغط الزر
-    db.ref('users/' + currentSession).once('value', (snapshot) => {
-        let currentUser = snapshot.val();
-        if (!currentUser) return;
-
-        let currentRole = currentUser.role || "";
-        let ownerTeamName = "";
-
-        // إذا كان الرول مثلاً "Owner JSK" أو "Owner MCA"
-        if (currentRole.startsWith("Owner ")) {
-            ownerTeamName = currentRole.replace("Owner ", "").trim().toUpperCase();
-        } else if (currentRole === "Owner") {
-            // الأونر العام يمكنه الطرد من أي فريق للتجربة والتحكم
-            ownerTeamName = "ALL";
-        }
-
-        if (!ownerTeamName) {
-            alert("عذراً، هذه الصلاحية مخصصة لرؤساء الفرق (Owner [Team]) فقط!");
-            return;
-        }
-
-        // 2. البحث عن اللاعب المراد طرده في السحاب
-        db.ref('users/' + targetUser).once('value', (targetSnapshot) => {
-            let targetData = targetSnapshot.val();
-
-            if (!targetData) {
-                alert("لم يتم العثور على هذا اللاعب مسجلاً في السحاب!");
-                return;
-            }
-
-            let playerTeam = (targetData.team || "").trim().toUpperCase();
-
-            if (!playerTeam || playerTeam === "بدون فريق") {
-                alert("هذا اللاعب غير منضم إلى أي فريق حالياً!");
-                return;
-            }
-
-            // 3. التحقق الأهم: هل الفريق هو نفس فريق هذا الـ Owner؟
-            if (ownerTeamName !== "ALL" && playerTeam !== ownerTeamName) {
-                alert(`لا يمكنك طرد هذا اللاعب! لأنه يلعب في فريق (${targetData.team}) وأنت رئيس فريق (${ownerTeamName}) فقط.`);
-                return;
-            }
-
-            // 4. إزالة اللاعب من الفريق وإعادته لـ "بدون فريق"
-            db.ref('users/' + targetUser + '/team').set("بدون فريق").then(() => {
-                alert(`تم طرد اللاعب ${targetUser} بنجاح من فريق (${playerTeam}) ❌`);
-                
-                if (targetInput) targetInput.value = "";
-                
-                // تحديث الشاشة
-                if (typeof loadTeamDetails === 'function') loadTeamDetails();
-            }).catch((err) => {
-                alert("حدث خطأ أثناء الطرد: " + err.message);
-            });
-        });
-    });
-}
