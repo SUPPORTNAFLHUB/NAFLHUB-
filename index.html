@@ -205,73 +205,68 @@
     </div>
 
         <!-- خيارات الإدارة العامة (تظهر حصراً للأونر والـ Staff فقط) -->
-    <div id="generalAdminBox" style="display: none;">
-        <h4 style="margin-top:15px;">تعديل ترتيب الدوري (Table):</h4>
-        <select id="editTeamSelect">
-            <option value="JSK">JSK</option>
-            <option value="MCA">MCA</option>
-            <option value="USMA">USMA</option>
-            <option value="CRB">CRB</option>
-            <option value="USMH">USMH</option>
-            <option value="MCO">MCO</option>
-            <option value="NAHD">NAHD</option>
-            <option value="ESS">ESS</option>
-        </select>
-        <div class="inputs-row">
-            <input type="number" id="editPlayed" placeholder="لعب">
-            <input type="number" id="editWon" placeholder="فاز">
-            <input type="number" id="editDrawn" placeholder="تعادل">
-            <input type="number" id="editLost" placeholder="خسر">
-            <input type="number" id="editPoints" placeholder="النقاط">
+   <div id="generalAdminBox" style="display: none;">
+
+    <!-- 1. قسم تعديل ترتيب الدوري (Table) -->
+    <div style="margin-bottom: 25px;">
+        <h4 style="color:#00ff87; margin-bottom:10px;">📊 تعديل ترتيب الدوري (Table):</h4>
+        
+        <div class="inputs-row" style="margin-bottom:10px;">
+            <select id="teamSelect" style="width:100%; padding:8px; background:#333; color:#fff; border:1px solid #555; border-radius:4px;">
+                <option value="JSK">JSK</option>
+                <option value="MCA">MCA</option>
+                <option value="CRB">CRB</option>
+                <option value="CSC">CSC</option>
+                <option value="MOB">MOB</option>
+            </select>
         </div>
-        <button class="action-btn" onclick="saveTeamTableAndStats()">حفظ جدول الدوري 📊</button>
 
-        <h4 style="margin-top:20px;">تعيين رول للاعب:</h4>
-        <input type="text" id="targetUser" placeholder="اسم لاعب روبلوكس">
-        <select id="newRoleSelect">
-            <option value="Player">Player</option>
-            <option value="Staff">Staff</option>
-            <option value="Owner JSK">Owner JSK</option>
-            <option value="Owner MCA">Owner MCA</option>
-            <option value="Owner USMA">Owner USMA</option>
-            <option value="Owner CRB">Owner CRB</option>
-            <option value="Owner USMH">Owner USMH</option>
-            <option value="Owner MCO">Owner MCO</option>
-            <option value="Owner ESS">Owner ESS</option>
-            <option value="Owner NAHD">Owner NAHD</option>
-            <option value="Owner">Owner (العام)</option>
-        </select>
-        <button class="action-btn" onclick="updateUserRole()">حفظ الرول 👤</button>
-
-        <!-- ⬇️ ضع كود المباريات الجديد هنا بالأسفل ⬇️ -->
-        <div style="border-top: 1px dashed #444; margin-top: 20px; padding-top: 15px;">
-            <h4 style="color:#00ff87; margin-bottom:10px;">⚽ إدارة وتغيير المباريات (Games):</h4>
-            
-            <div class="inputs-row" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-                <input type="text" id="matchHomeTeam" placeholder="الفريق المستضيف (مثال: JSK)" style="flex:1;">
-                <input type="text" id="matchAwayTeam" placeholder="الفريق الضيف (مثال: MCA)" style="flex:1;">
-            </div>
-
-            <div class="inputs-row" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-                <input type="text" id="matchScore" placeholder="النتيجة (مثال: 2 - 1)" style="flex:1;">
-                <input type="text" id="matchTime" placeholder="الوقت / التاريخ (مثال: 20:00)" style="flex:1;">
-            </div>
-
-            <div class="inputs-row" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-                <select id="matchStatus" style="flex:1; padding:8px; background:#333; color:#fff; border:1px solid #555; border-radius:4px;">
-                    <option value="قريباً ⏳">قريباً ⏳</option>
-                    <option value="مباشر 🔴">مباشر 🔴</option>
-                    <option value="انتهت 🏁">انتهت 🏁</option>
-                    <option value="مؤجلة ⚠️">مؤجلة ⚠️</option>
-                </select>
-                <input type="text" id="matchRound" placeholder="الجولة (مثال: الجولة 1)" style="flex:1;">
-            </div>
-
-            <button class="action-btn" onclick="saveMatchCard()" style="background:#00ff87; color:#000; font-weight:bold; width:100%;">حفظ/إضافة المباراة 🚀</button>
+        <div class="inputs-row" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+            <input type="number" id="playedMatches" placeholder="لعب" style="flex:1;">
+            <input type="number" id="wonMatches" placeholder="فاز" style="flex:1;">
+            <input type="number" id="drawnMatches" placeholder="تعادل" style="flex:1;">
         </div>
-        <!-- ⬆️ نهاية كود المباريات ⬆️ -->
 
+        <div class="inputs-row" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+            <input type="number" id="lostMatches" placeholder="خسر" style="flex:1;">
+            <input type="number" id="teamPoints" placeholder="النقاط" style="flex:1;">
+        </div>
+
+        <button class="action-btn" onclick="saveLeagueTable()" style="background:#00ff87; color:#000; font-weight:bold; width:100%;">حفظ جدول الدوري 📊</button>
     </div>
+
+    <!-- 2. قسم إدارة وتغيير المباريات (Games) منفصل تماماً -->
+    <div style="border-top: 1px dashed #444; margin-top: 20px; padding-top: 15px;">
+        <h4 style="color:#00ff87; margin-bottom:10px;">⚽ إدارة وتغيير المباريات (Games):</h4>
+        
+        <div class="inputs-row" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+            <input type="text" id="matchHomeTeam" placeholder="الفريق المستضيف (مثال: JSK)" style="flex:1;">
+            <input type="text" id="matchAwayTeam" placeholder="الفريق الضيف (مثال: MCA)" style="flex:1;">
+        </div>
+
+        <div class="inputs-row" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+            <input type="text" id="matchScore" placeholder="النتيجة (مثال: 2 - 1)" style="flex:1;">
+            <input type="text" id="matchTime" placeholder="الوقت / التاريخ (مثال: 20:00)" style="flex:1;">
+        </div>
+
+        <div class="inputs-row" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+            <select id="matchStatus" style="flex:1; padding:8px; background:#333; color:#fff; border:1px solid #555; border-radius:4px;">
+                <option value="قريباً ⏳">قريباً ⏳</option>
+                <option value="مباشر 🔴">مباشر 🔴</option>
+                <option value="انتهت 🏁">انتهت 🏁</option>
+                <option value="مؤجلة ⚠️">مؤجلة ⚠️</option>
+            </select>
+            <input type="text" id="matchRound" placeholder="الجولة (مثال: الجولة 1)" style="flex:1;">
+        </div>
+
+        <!-- أزرار المباريات فقط -->
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="action-btn" onclick="saveMatchCard()" style="background:#00ff87; color:#000; font-weight:bold; flex: 2;">حفظ/تعديل المباراة 🚀</button>
+            <button class="action-btn" onclick="deleteMatchCard()" style="background:#ff4444; color:#fff; font-weight:bold; flex: 1;">حذف المباراة 🗑️</button>
+        </div>
+    </div>
+
+</div>
 
     <!-- مكتبات Firebase السحابية -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
