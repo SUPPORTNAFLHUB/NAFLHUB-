@@ -112,8 +112,9 @@ function loadUserData(username) {
         avatarImg.src = `https://www.roblox.com/headshot-thumbnail/image?username=${encodeURIComponent(username)}&width=150&height=150&format=png`;
     }
 
+    // استخدام .on بدلاً من .once لكي يتحدث الرول والبروفايل فوراً وبدون تحديث الصفحة للجميع
     if (db) {
-        db.ref('users/' + username).once('value', (snapshot) => {
+        db.ref('users/' + username).on('value', (snapshot) => {
             let user = snapshot.val() || { username: username, role: "Player", team: "بدون فريق" };
 
             if (profileRole) profileRole.innerText = user.role || "Player";
@@ -133,6 +134,7 @@ function loadUserData(username) {
 
     loadMyInvites(username);
 }
+
 
 // ==========================================
 // 3. جدول الدوري والمباريات
@@ -375,7 +377,8 @@ function loadMyInvites(username) {
     const container = document.getElementById("myInvites");
     if (!container || !db) return;
 
-    db.ref('offers').once('value', (snapshot) => {
+    // الاستماع المباشر لعروض Firebase لكي يظهر العرض فور إرساله دون الحاجة لريفريش
+    db.ref('offers').on('value', (snapshot) => {
         const offersData = snapshot.val();
         if (!offersData) {
             container.innerHTML = "<p style='color: #888;'>لا توجد عروض حالياً.</p>";
@@ -392,18 +395,19 @@ function loadMyInvites(username) {
         container.innerHTML = "";
         myOffers.forEach((offer) => {
             const box = document.createElement("div");
-            box.style.cssText = "background:#2b2b2b; padding:8px; margin:5px 0; border-radius:4px;";
+            box.style.cssText = "background:#2b2b2b; padding:10px; margin:8px 0; border-radius:6px; text-align:right;";
             box.innerHTML = `
-                عرض للانضمام إلى: <b>${offer.fromTeam}</b><br>
-                <div style="margin-top:5px;">
-                    <button onclick="respondOffer('${offer.id}', 'accepted', '${offer.fromTeam}')" style="background:#00ff87; border:none; padding:4px 10px; font-weight:bold; cursor:pointer; color:#000; border-radius:4px;">قبول ✅</button>
-                    <button onclick="respondOffer('${offer.id}', 'rejected', '')" style="background:#ff4444; color:#fff; border:none; padding:4px 10px; cursor:pointer; border-radius:4px;">رفض ❌</button>
+                عرض للانضمام إلى فريق: <b>${offer.fromTeam}</b> (مُرسل من: ${offer.from})<br>
+                <div style="margin-top:8px;">
+                    <button onclick="respondOffer('${offer.id}', 'accepted', '${offer.fromTeam}')" style="background:#00ff87; border:none; padding:5px 12px; font-weight:bold; cursor:pointer; color:#000; border-radius:4px; margin-left:5px;">قبول ✅</button>
+                    <button onclick="respondOffer('${offer.id}', 'rejected', '')" style="background:#ff4444; color:#fff; border:none; padding:5px 12px; cursor:pointer; border-radius:4px;">رفض ❌</button>
                 </div>
             `;
             container.appendChild(box);
         });
     });
 }
+
 
 function respondOffer(offerId, status, teamName) {
     if (!db) return;
@@ -432,12 +436,24 @@ function updateUserRole() {
     }
 
     if (db) {
-        db.ref('users/' + target + '/role').set(newRole).then(() => {
-            alert(`تم بنجاح تغيير رول اللاعب ${target} إلى ${newRole} 👤`);
+        // تحديث الرول والفريق تلقائياً إذا كان الرول يبدأ بـ Owner [Team]
+        let teamUpdate = "بدون فريق";
+        if (newRole.startsWith("Owner ")) {
+            teamUpdate = newRole.replace("Owner ", "").trim();
+        }
+
+        db.ref('users/' + target).update({
+            role: newRole,
+            team: teamUpdate !== "بدون فريق" ? teamUpdate : undefined
+        }).then(() => {
+            alert(`تم بنجاح تعيين الرول (${newRole}) للاعب ${target} وتحديث بياناته سحابياً! 👤`);
             document.getElementById("targetUser").value = "";
+        }).catch(err => {
+            alert("حدث خطأ: " + err.message);
         });
     }
 }
+
 
 function kickPlayerFromTeam() {
     const targetInput = document.getElementById("kickTargetUser");
