@@ -1000,3 +1000,36 @@ function saveLeagueTable() {
     });
 }
 
+// ==========================================
+// دالة الحفظ السريع للرولات (Staff & Owners)
+// ==========================================
+function quickAssignRole(selectedRole) {
+    const usernameInput = document.getElementById("globalUsernameInput");
+    if (!usernameInput) return;
+
+    const targetUsername = usernameInput.value.trim();
+
+    if (!targetUsername) {
+        alert("يرجى كتابة اسم حساب اللاعب أولاً في الخانة العلوية!");
+        return;
+    }
+
+    if (!db) {
+        alert("خطأ: الاتصال بقاعدة البيانات Firebase غير مفعل!");
+        return;
+    }
+
+    if (!confirm(`هل أنت متأكد من إعطاء رول (${selectedRole}) للاعب (${targetUsername})؟`)) {
+        return;
+    }
+
+    // حفظ الرول مباشرة في قاعدة البيانات
+    db.ref('users/' + targetUsername).update({
+        role: selectedRole
+    }).then(() => {
+        alert(`تم حفظ وتطبيق رول [ ${selectedRole} ] للمستخدم (${targetUsername}) بنجاح! 🎉`);
+        usernameInput.value = ""; // مسح الخانة بعد النجاح
+    }).catch(err => {
+        alert("حدث خطأ أثناء حفظ الرول: " + err.message);
+    });
+}

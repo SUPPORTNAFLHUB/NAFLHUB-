@@ -197,9 +197,8 @@
 <div id="adminPanel" style="display:none; margin-top:20px; border-top:1px solid #444; padding-top:15px; text-align:right;">
     <h3 style="color:#00ff87;">🛠️ لوحة التحكم والإدارة</h3>
     
-
-        <!-- خيارات الإدارة العامة (تظهر حصراً للأونر والـ Staff فقط) -->
-  <div id="generalAdminBox" style="display: none;">
+<!-- خيارات الإدارة العامة (تظهر حصراً للأونر والـ Staff فقط) -->
+<div id="generalAdminBox" style="display: none;">
 
     <!-- 1. قسم تعديل ترتيب الدوري (Table) -->
     <div style="margin-bottom: 25px;">
@@ -232,7 +231,7 @@
         <button class="action-btn" onclick="saveLeagueTable()" style="background:#00ff87; color:#000; font-weight:bold; width:100%;">حفظ جدول الدوري 📊</button>
     </div>
 
-    <!-- 2. قسم إدارة وتغيير المباريات (Games) - ظاهر ومرتب -->
+    <!-- 2. قسم إدارة وتغيير المباريات (Games) -->
     <div style="border-top: 1px dashed #444; margin-top: 20px; padding-top: 15px; margin-bottom: 25px;">
         <h4 style="color:#00ff87; margin-bottom:10px;">⚽ إدارة وتغيير المباريات (Games):</h4>
         
@@ -262,7 +261,33 @@
         </div>
     </div>
 
-    <!-- 3. قسم طرد اللاعبين (في الأسفل تماماً) -->
+    <!-- 3. قسم منح الرولات والصلاحيات (Staff & Team Owners) -->
+    <div style="border-top: 1px dashed #444; margin-top: 20px; padding-top: 15px; margin-bottom: 25px;">
+        <h4 style="color:#00ff87; margin-bottom:10px;">👑 منح الرولات والصلاحيات:</h4>
+        
+        <div style="margin-bottom:12px;">
+            <input type="text" id="globalUsernameInput" placeholder="اكتب اسم حساب روبلوكس (مثال: anisali059)..." style="width:100%; padding:10px; background:#333; color:#fff; border:1px solid #555; border-radius:6px;">
+        </div>
+
+        <p style="font-size:13px; color:#ccc; margin:8px 0 5px 0;">اختر الرول المراد منحه للاعب:</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 12px;">
+            <button type="button" class="action-btn" onclick="quickAssignRole('Owner')" style="background:#800080; color:#fff; padding:8px; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">Owner </button>
+            <button type="button" class="action-btn" onclick="quickAssignRole('Co-Owner')" style="background:#800080; color:#fff; padding:8px; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">⭐ Co-Owner</button>
+            <button type="button" class="action-btn" onclick="quickAssignRole('Staff')" style="background:#ff9900; color:#fff; padding:8px; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">🛡️ Staff</button>
+            <button type="button" class="action-btn" onclick="quickAssignRole('Owner JSK')" style="background:#1e1e1e; border:1px solid #00ff87; color:#00ff87; padding:8px; border-radius:4px; font-weight:bold; cursor:pointer;">👑 JSK</button>
+            <button type="button" class="action-btn" onclick="quickAssignRole('Owner MCA')" style="background:#1e1e1e; border:1px solid #00ff87; color:#00ff87; padding:8px; border-radius:4px; font-weight:bold; cursor:pointer;">👑 MCA</button>
+            <button type="button" class="action-btn" onclick="quickAssignRole('Owner USMA')" style="background:#1e1e1e; border:1px solid #00ff87; color:#00ff87; padding:8px; border-radius:4px; font-weight:bold; cursor:pointer;">👑 USMA</button>
+            <button type="button" class="action-btn" onclick="quickAssignRole('Owner CRB')" style="background:#1e1e1e; border:1px solid #00ff87; color:#00ff87; padding:8px; border-radius:4px; font-weight:bold; cursor:pointer;">👑 CRB</button>
+            <button type="button" class="action-btn" onclick="quickAssignRole('Owner USMH')" style="background:#1e1e1e; border:1px solid #00ff87; color:#00ff87; padding:8px; border-radius:4px; font-weight:bold; cursor:pointer;">👑 USMH</button>
+            <button type="button" class="action-btn" onclick="quickAssignRole('Owner MCO')" style="background:#1e1e1e; border:1px solid #00ff87; color:#00ff87; padding:8px; border-radius:4px; font-weight:bold; cursor:pointer;">👑 MCO</button>
+            <button type="button" class="action-btn" onclick="quickAssignRole('Owner NAHD')" style="background:#1e1e1e; border:1px solid #00ff87; color:#00ff87; padding:8px; border-radius:4px; font-weight:bold; cursor:pointer;">👑 NAHD</button>
+            <button type="button" class="action-btn" onclick="quickAssignRole('Owner ESS')" style="background:#1e1e1e; border:1px solid #00ff87; color:#00ff87; padding:8px; border-radius:4px; font-weight:bold; cursor:pointer;">👑 ESS</button>
+            <button type="button" class="action-btn" onclick="quickAssignRole('Player')" style="background:#444; color:#fff; padding:8px; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">👤 Player</button>
+        </div>
+    </div>
+
+    <!-- 4. قسم طرد اللاعبين -->
     <div style="border-top: 1px dashed #444; margin-top: 20px; padding-top: 15px;">
         <h4 style="color:#ff4444; margin-bottom:10px;">❌ طرّد اللاعبين من الفريق:</h4>
         
@@ -290,7 +315,7 @@
     </div>
 
 </div>
- <
+
 
     <!-- مكتبات Firebase السحابية -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
