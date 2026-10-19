@@ -164,20 +164,57 @@ function loadUserData(username) {
 }
 
 
-// ==========================================
-// 3. جدول الدوري والمباريات
-// ==========================================
-function loadLeagueTable() {
-    const tbody = document.getElementById("leagueTableBody");
-    if (!tbody) return;
+// قائمة الأندية الثابتة لضمان عدم اختفائها
+const DEFAULT_TEAMS = ["JSK", "MCA", "USMA", "CRB", "USMH", "MCO", "NAHD", "ESS"];
 
-    if (db) {
-        db.ref('leagueTable').once('value', (snapshot) => {
-            let stats = snapshot.val() || {};
-            renderTable(stats);
+function loadLeagueTable() {
+    const tableBody = document.getElementById("leagueTableBody");
+    if (!tableBody || typeof db === "undefined" || !db) return;
+
+    db.ref('standings').on('value', (snapshot) => {
+        const data = snapshot.val() || {};
+        let html = "";
+
+        // تجهيز بيانات كل الفرق وقراءتها
+        let teamsList = DEFAULT_TEAMS.map(teamName => {
+            const teamData = data[teamName] || {};
+            return {
+                team: teamName,
+                played: teamData.played || 0,
+                won: teamData.won || 0,
+                drawn: teamData.drawn || 0,
+                lost: teamData.lost || 0,
+                points: teamData.points || 0
+            };
         });
-    }
+
+        // ترتيب الأندية حسب النقاط (الأعلى نقطاً في الأعلى)
+        teamsList.sort((a, b) => b.points - a.points);
+
+        // إنشاء صفوف الجدول
+        teamsList.forEach(t => {
+            html += `
+                <tr style="border-bottom: 1px solid #333;">
+                    <td style="padding:10px; font-weight:bold;">${t.team}</td>
+                    <td style="padding:10px;">${t.played}</td>
+                    <td style="padding:10px;">${t.won}</td>
+                    <td style="padding:10px;">${t.drawn}</td>
+                    <td style="padding:10px;">${t.lost}</td>
+                    <td style="padding:10px; color:#00ff87; font-weight:bold;">${t.points}</td>
+                </tr>
+            `;
+        });
+
+        tableBody.innerHTML = html;
+    });
 }
+
+// تشغيل القراءة فور تحميل الصفحة
+document.addEventListener("DOMContentLoaded", () => {
+    if (typeof loadLeagueTable === "function") loadLeagueTable();
+    if (typeof loadGamesCards === "function") loadGamesCards();
+});
+
 
 function renderTable(stats) {
     const tbody = document.getElementById("leagueTableBody");
@@ -520,55 +557,74 @@ function updateUserRole() {
 }
 
 
-function kickPlayerFromTeam() {
-    const targetInput = document.getElementById("kickTargetUser");
-    const targetUser = targetInput ? targetInput.value.trim() : "";
+// دالة لجلب وجعل قائمة اللاعبين خاصة بالفريق المختار فقط
+function loadTeamPlayersForKick() {
+    const teamSelect = document.getElementById("kickTeamSelect");
+    const playerSelect = document.getElementById("kickPlayerSelect");
+    
+    if (!teamSelect || !playerSelect) return;
+    const selectedTeam = teamSelect.value;
 
-    if (!targetUser || !db) return;
+    playerSelect.innerHTML = '<option value="">جاري تحميل اللاعبين...</option>';
 
-    let currentSession = localStorage.getItem("naflCurrentSession");
-    if (!currentSession) return;
+    if (!selectedTeam) {
+        playerSelect.innerHTML = '<option value="">اختر الفريق أولاً...</option>';
+        return;
+    }
 
-    db.ref('users/' + currentSession).once('value', (snapshot) => {
-        let currentUser = snapshot.val();
-        if (!currentUser) return;
+    // جلب اللاعبين المنضمين لهذا الفريق فقط من قاعدة البيانات
+    db.ref('players').orderByChild('team').equalTo(selectedTeam).once('value')
+        .then((snapshot) => {
+            const playersData = snapshot.val();
+            let options = '<option value="">اختر اللاعب المراد طرده...</option>';
 
-        let currentRole = currentUser.role || "";
-        let ownerTeamName = "";
-
-        if (currentRole.startsWith("Owner ")) {
-            ownerTeamName = currentRole.replace("Owner ", "").trim().toUpperCase();
-        } else if (currentRole === "Owner") {
-            ownerTeamName = "ALL";
-        }
-
-        if (!ownerTeamName) {
-            alert("هذه الصلاحية مخصصة لرؤساء الفرق فقط!");
-            return;
-        }
-
-        db.ref('users/' + targetUser).once('value', (targetSnapshot) => {
-            let targetData = targetSnapshot.val();
-            if (!targetData) {
-                alert("لم يتم العثور على اللاعب!");
-                return;
+            if (playersData) {
+                Object.keys(playersData).forEach(playerId => {
+                    let player = playersData[playerId];
+                    options += `<option value="${playerId}">${player.name || playerId}</option>`;
+                });
+            } else {
+                options = '<option value="">لا يوجد لاعبو منضمون لهذا النادي حالياً</option>';
             }
-
-            let playerTeam = (targetData.team || "").trim().toUpperCase();
-
-            if (ownerTeamName !== "ALL" && playerTeam !== ownerTeamName) {
-                alert(`لا يمكنك طرد هذا اللاعب لأنه من فريق آخر!`);
-                return;
-            }
-
-            db.ref('users/' + targetUser + '/team').set("بدون فريق").then(() => {
-                alert(`تم طرد اللاعب ${targetUser} بنجاح من الفريق ❌`);
-                if (targetInput) targetInput.value = "";
-                loadTeamDetails();
-            });
+            playerSelect.innerHTML = options;
+        })
+        .catch(err => {
+            playerSelect.innerHTML = '<option value="">خطأ في جلب اللاعبين</option>';
         });
-    });
 }
+
+// دالة تنفيذ طرد اللاعب المحدد
+function kickPlayerFromTeam() {
+    const teamSelect = document.getElementById("kickTeamSelect");
+    const playerSelect = document.getElementById("kickPlayerSelect");
+
+    if (!teamSelect || !playerSelect) return;
+
+    const team = teamSelect.value;
+    const playerId = playerSelect.value;
+    const playerName = playerSelect.options[playerSelect.selectedIndex].text;
+
+    if (!team || !playerId) {
+        alert("يرجى اختيار الفريق واللاعب المراد طرده بدقة!");
+        return;
+    }
+
+    if (!confirm(`هل أنت متأكد من طرد اللاعب (${playerName}) من نادي ${team}؟`)) {
+        return;
+    }
+
+    // حذف اللاعب أو تحديث حالته في قاعدة البيانات (حسب هيكل تخزين اللاعبين لديك)
+    db.ref('players/' + playerId).remove()
+        .then(() => {
+            alert(`تم طرد اللاعب ${playerName} بنجاح من نادي ${team}! ❌`);
+            // إعادة تحميل القائمة لتحديثها
+            loadTeamPlayersForKick();
+        })
+        .catch(err => {
+            alert("حدث خطأ أثناء عملية الطرد: " + err.message);
+        });
+}
+
 
 // ==========================================
 // 1. حفظ وتحديث المباريات في Firebase
@@ -796,3 +852,151 @@ function saveMatchCard() {
         alert("حدث خطأ أثناء الحفظ في قاعدة البيانات: " + err.message);
     });
 }
+
+// ==========================================
+// دالة حذف مباراة مباشرة وسريعة
+// ==========================================
+function deleteMatchCard() {
+    const home = document.getElementById("matchHomeTeam") ? document.getElementById("matchHomeTeam").value.trim() : "";
+    const away = document.getElementById("matchAwayTeam") ? document.getElementById("matchAwayTeam").value.trim() : "";
+
+    if (!home || !away) {
+        alert("يرجى كتابة اسم الفريقين في الخانات لتحديد المباراة المراد حذفها!");
+        return;
+    }
+
+    const matchId = `${home}_vs_${away}`.replace(/\s+/g, '_');
+
+    db.ref('matches/' + matchId).remove()
+        .then(() => {
+            alert("تم حذف المباراة بنجاح! 🗑️");
+            document.getElementById("matchHomeTeam").value = "";
+            document.getElementById("matchAwayTeam").value = "";
+            if (typeof loadGamesCards === "function") {
+                loadGamesCards();
+            }
+        })
+        .catch(err => {
+            alert("حدث خطأ أثناء الحذف: " + err.message);
+        });
+}
+
+
+// ==========================================
+// تحميل وعرض كروت المباريات مع زر التعديل السريع
+// ==========================================
+function loadGamesCards() {
+    const gamesContainer = document.getElementById("gamesContainer") || document.getElementById("games");
+    if (!gamesContainer || !db) return;
+
+    db.ref('matches').on('value', (snapshot) => {
+        const matchesData = snapshot.val();
+        let targetDiv = gamesContainer.querySelector('.games-list') || gamesContainer;
+        
+        if (!matchesData) {
+            targetDiv.innerHTML = "<p style='color:#888; text-align:center; padding:20px;'>لا توجد مباريات مسجلة حالياً.</p>";
+            return;
+        }
+
+        let html = "";
+        Object.keys(matchesData).forEach(key => {
+            let m = matchesData[key];
+            let statusColor = m.status.includes("مباشر") ? "#ff4444" : (m.status.includes("انتهت") ? "#888" : "#00ff87");
+
+            html += `
+                <div style="background:#222; border:1px solid #333; border-radius:10px; padding:15px; margin:12px 0; text-align:center; position:relative;">
+                    <div style="font-size:12px; color:#aaa; margin-bottom:8px;">${m.round || 'مباراة'} • <span style="color:${statusColor}; font-weight:bold;">${m.status}</span></div>
+                    
+                    <div style="display:flex; justify-content:space-around; align-items:center; font-size:18px; font-weight:bold;">
+                        <span style="flex:1;">${m.homeTeam}</span>
+                        <span style="background:#111; padding:6px 14px; border-radius:6px; color:#00ff87; letter-spacing:2px; margin:0 10px;">${m.score}</span>
+                        <span style="flex:1;">${m.awayTeam}</span>
+                    </div>
+                    
+                    <div style="font-size:12px; color:#888; margin-top:10px;">⏰ التوقيت: ${m.time}</div>
+                    
+                    <!-- زر تعديل سريع يظهر للإداريين -->
+                    <div style="margin-top: 10px; border-top: 1px solid #333; padding-top: 8px;">
+                        <button onclick="fillMatchForm('${m.homeTeam}', '${m.awayTeam}', '${m.score}', '${m.time}', '${m.status}', '${m.round}')" style="background:#333; color:#00ff87; border:1px solid #00ff87; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer;">تعديل هذه المباراة ✏️</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        targetDiv.innerHTML = html;
+    });
+}
+
+// دالة مساعدة لنقل بيانات الكارت إلى خانات الإدخال تلقائياً
+function fillMatchForm(home, away, score, time, status, round) {
+    document.getElementById("matchHomeTeam").value = home;
+    document.getElementById("matchAwayTeam").value = away;
+    document.getElementById("matchScore").value = score;
+    document.getElementById("matchTime").value = time;
+    document.getElementById("matchStatus").value = status;
+    document.getElementById("matchRound").value = round;
+    
+    // الصعود أعلى الصفحة بسلاسة للوصول لخانات التعديل
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    alert("تم نقل بيانات المباراة إلى الخانات! قم بتعديل ما تريد ثم اضغط حفظ 🚀");
+}
+
+// ==========================================
+// دالة حفظ وتحديث بيانات ترتيب الفريق في جدول الدوري
+// ==========================================
+function saveLeagueTable() {
+    const teamSelect = document.getElementById("teamSelect");
+    const playedInput = document.getElementById("playedMatches");
+    const wonInput = document.getElementById("wonMatches");
+    const drawnInput = document.getElementById("drawnMatches");
+    const lostInput = document.getElementById("lostMatches");
+    const pointsInput = document.getElementById("teamPoints");
+
+    if (!teamSelect) {
+        alert("خطأ: لم يتم العثور على قائمة اختيار الفرق!");
+        return;
+    }
+
+    const team = teamSelect.value;
+    const played = parseInt(playedInput ? playedInput.value : 0) || 0;
+    const won = parseInt(wonInput ? wonInput.value : 0) || 0;
+    const drawn = parseInt(drawnInput ? drawnInput.value : 0) || 0;
+    const lost = parseInt(lostInput ? lostInput.value : 0) || 0;
+    const points = parseInt(pointsInput ? pointsInput.value : 0) || 0;
+
+    if (typeof db === "undefined" || !db) {
+        alert("خطأ: قاعدة البيانات غير متصلة!");
+        return;
+    }
+
+    // حفظ البيانات في قاعدة البيانات تحت مسار 'standings'
+    db.ref('standings/' + team).set({
+        team: team,
+        played: played,
+        won: won,
+        drawn: drawn,
+        lost: lost,
+        points: points,
+        updatedAt: Date.now()
+    }).then(() => {
+        alert(`تم تحديث جدول فريق (${team}) بنجاح! 📊`);
+        
+        // تفريغ الحقول بعد الحفظ
+        if (playedInput) playedInput.value = "";
+        if (wonInput) wonInput.value = "";
+        if (drawnInput) drawnInput.value = "";
+        if (lostInput) lostInput.value = "";
+        if (pointsInput) pointsInput.value = "";
+
+        // إعادة تحميل الجدول مباشرة لكي يظهر التغيير فوراً
+        if (typeof loadLeagueTable === "function") {
+            loadLeagueTable();
+        } else {
+            // إذا لم تكن الدالة موجودة، قم بتحديث الصفحة تلقائياً لتظهر البيانات الجديدة
+            location.reload();
+        }
+    }).catch(err => {
+        alert("حدث خطأ أثناء الاتصال بقاعدة البيانات: " + err.message);
+    });
+}
+

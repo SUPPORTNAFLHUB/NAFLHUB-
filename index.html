@@ -197,15 +197,9 @@
 <div id="adminPanel" style="display:none; margin-top:20px; border-top:1px solid #444; padding-top:15px; text-align:right;">
     <h3 style="color:#00ff87;">🛠️ لوحة التحكم والإدارة</h3>
     
-    <!-- قسم خاص برؤساء الفرق (يظهر لرئيس الفريق والستاف والأونر) -->
-    <div id="ownerKickBox" style="background:#1e1e1e; padding:12px; border-radius:8px; margin-bottom:15px; border:1px solid #ff4444;">
-        <h4 style="color:#ff4444; margin:0 0 8px 0;">🚫 طرد لاعب من فريقك:</h4>
-        <input type="text" id="kickTargetUser" placeholder="اسم لاعب روبلوكس المراد طرده...">
-        <button class="action-btn" onclick="kickPlayerFromTeam()" style="background:#ff4444; color:#fff;">طرد اللاعب من الفريق ❌</button>
-    </div>
 
         <!-- خيارات الإدارة العامة (تظهر حصراً للأونر والـ Staff فقط) -->
-   <div id="generalAdminBox" style="display: none;">
+  <div id="generalAdminBox" style="display: none;">
 
     <!-- 1. قسم تعديل ترتيب الدوري (Table) -->
     <div style="margin-bottom: 25px;">
@@ -215,9 +209,12 @@
             <select id="teamSelect" style="width:100%; padding:8px; background:#333; color:#fff; border:1px solid #555; border-radius:4px;">
                 <option value="JSK">JSK</option>
                 <option value="MCA">MCA</option>
+                <option value="USMA">USMA</option>
                 <option value="CRB">CRB</option>
-                <option value="CSC">CSC</option>
-                <option value="MOB">MOB</option>
+                <option value="USMH">USMH</option>
+                <option value="MCO">MCO</option>
+                <option value="NAHD">NAHD</option>
+                <option value="ESS">ESS</option>
             </select>
         </div>
 
@@ -235,18 +232,18 @@
         <button class="action-btn" onclick="saveLeagueTable()" style="background:#00ff87; color:#000; font-weight:bold; width:100%;">حفظ جدول الدوري 📊</button>
     </div>
 
-    <!-- 2. قسم إدارة وتغيير المباريات (Games) منفصل تماماً -->
-    <div style="border-top: 1px dashed #444; margin-top: 20px; padding-top: 15px;">
+    <!-- 2. قسم إدارة وتغيير المباريات (Games) - ظاهر ومرتب -->
+    <div style="border-top: 1px dashed #444; margin-top: 20px; padding-top: 15px; margin-bottom: 25px;">
         <h4 style="color:#00ff87; margin-bottom:10px;">⚽ إدارة وتغيير المباريات (Games):</h4>
         
         <div class="inputs-row" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-            <input type="text" id="matchHomeTeam" placeholder="الفريق المستضيف (مثال: JSK)" style="flex:1;">
-            <input type="text" id="matchAwayTeam" placeholder="الفريق الضيف (مثال: MCA)" style="flex:1;">
+            <input type="text" id="matchHomeTeam" placeholder="الفريق المستضيف (مثال: JSK)" style="flex:1; padding:8px; background:#333; color:#fff; border:1px solid #555; border-radius:4px;">
+            <input type="text" id="matchAwayTeam" placeholder="الفريق الضيف (مثال: MCA)" style="flex:1; padding:8px; background:#333; color:#fff; border:1px solid #555; border-radius:4px;">
         </div>
 
         <div class="inputs-row" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-            <input type="text" id="matchScore" placeholder="النتيجة (مثال: 2 - 1)" style="flex:1;">
-            <input type="text" id="matchTime" placeholder="الوقت / التاريخ (مثال: 20:00)" style="flex:1;">
+            <input type="text" id="matchScore" placeholder="النتيجة (مثال: 2 - 1)" style="flex:1; padding:8px; background:#333; color:#fff; border:1px solid #555; border-radius:4px;">
+            <input type="text" id="matchTime" placeholder="الوقت / التاريخ (مثال: 20:00)" style="flex:1; padding:8px; background:#333; color:#fff; border:1px solid #555; border-radius:4px;">
         </div>
 
         <div class="inputs-row" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
@@ -256,17 +253,44 @@
                 <option value="انتهت 🏁">انتهت 🏁</option>
                 <option value="مؤجلة ⚠️">مؤجلة ⚠️</option>
             </select>
-            <input type="text" id="matchRound" placeholder="الجولة (مثال: الجولة 1)" style="flex:1;">
+            <input type="text" id="matchRound" placeholder="الجولة (مثال: الجولة 1)" style="flex:1; padding:8px; background:#333; color:#fff; border:1px solid #555; border-radius:4px;">
         </div>
 
-        <!-- أزرار المباريات فقط -->
         <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="action-btn" onclick="saveMatchCard()" style="background:#00ff87; color:#000; font-weight:bold; flex: 2;">حفظ/تعديل المباراة 🚀</button>
-            <button class="action-btn" onclick="deleteMatchCard()" style="background:#ff4444; color:#fff; font-weight:bold; flex: 1;">حذف المباراة 🗑️</button>
+            <button class="action-btn" onclick="saveMatchCard()" style="background:#00ff87; color:#000; font-weight:bold; flex: 2; padding:10px; border:none; border-radius:4px;">حفظ/تعديل المباراة 🚀</button>
+            <button class="action-btn" onclick="deleteMatchCard()" style="background:#ff4444; color:#fff; font-weight:bold; flex: 1; padding:10px; border:none; border-radius:4px;">حذف المباراة 🗑️</button>
         </div>
     </div>
 
+    <!-- 3. قسم طرد اللاعبين (في الأسفل تماماً) -->
+    <div style="border-top: 1px dashed #444; margin-top: 20px; padding-top: 15px;">
+        <h4 style="color:#ff4444; margin-bottom:10px;">❌ طرّد اللاعبين من الفريق:</h4>
+        
+        <div style="margin-bottom:10px;">
+            <select id="kickTeamSelect" onchange="loadTeamPlayersForKick()" style="width:100%; padding:8px; background:#333; color:#fff; border:1px solid #555; border-radius:4px;">
+                <option value="">اختر الفريق...</option>
+                <option value="JSK">JSK</option>
+                <option value="MCA">MCA</option>
+                <option value="USMA">USMA</option>
+                <option value="CRB">CRB</option>
+                <option value="USMH">USMH</option>
+                <option value="MCO">MCO</option>
+                <option value="NAHD">NAHD</option>
+                <option value="ESS">ESS</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom:10px;">
+            <select id="kickPlayerSelect" style="width:100%; padding:8px; background:#333; color:#fff; border:1px solid #555; border-radius:4px;">
+                <option value="">اختر اللاعب المراد طرده...</option>
+            </select>
+        </div>
+
+        <button class="action-btn" onclick="kickPlayerFromTeam()" style="background:#ff4444; color:#fff; font-weight:bold; width:100%; padding:10px; border:none; border-radius:4px;">طرد اللاعب من الفريق ❌</button>
+    </div>
+
 </div>
+ <
 
     <!-- مكتبات Firebase السحابية -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
