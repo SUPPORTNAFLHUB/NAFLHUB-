@@ -1033,3 +1033,34 @@ function quickAssignRole(selectedRole) {
         alert("حدث خطأ أثناء حفظ الرول: " + err.message);
     });
 }
+
+// الاستماع التلقائي للدعوات وتحديث مكان العروض فوراً
+function listenForInvites(username) {
+    if (!db) return;
+
+    const contentArea = document.getElementById("offerContentArea");
+    if (!contentArea) return;
+
+    db.ref('users/' + username + '/pendingInvite').on('value', (snapshot) => {
+        const inviteData = snapshot.val();
+
+        if (inviteData && inviteData.team) {
+            pendingTeamName = inviteData.team;
+            // إذا وُجدت دعوة: إظهار اسم الفريق مع أزرار القبول والرفض
+            contentArea.innerHTML = `
+                <p style="color: #fff; font-size: 16px; margin-bottom: 15px;">
+                    يرغب نادي <b style="color: #00ff87; font-size: 20px;">${pendingTeamName}</b> في ضمك لصفوفه!
+                </p>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button type="button" onclick="acceptAutoInvite()" style="background: #28a745; color: #fff; border: none; padding: 10px 22px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px;">قبول العرض ✅</button>
+                    <button type="button" onclick="rejectAutoInvite()" style="background: #dc3545; color: #fff; border: none; padding: 10px 22px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px;">رفض العرض ❌</button>
+                </div>
+            `;
+        } else {
+            // إذا لم توجد دعوة: إرسال رسالة توضح أنه لا توجد عروض حالياً
+            contentArea.innerHTML = `
+                <p style="color: #aaa; font-size: 14px; margin: 0;">مرحباً <b>${username}</b>، لا توجد عروض انضمام معلقة لك حالياً.</p>
+            `;
+        }
+    });
+}
