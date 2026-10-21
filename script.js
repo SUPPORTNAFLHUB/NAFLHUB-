@@ -1086,3 +1086,17 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+db.ref('users/' + username + '/pendingInvite').on('value', (snapshot) => {
+    const inviteData = snapshot.val();
+    // يقرأinviteData.team
+});
+
+function sendTeamInvite(targetUsername, teamName) {
+    db.ref('users/' + targetUsername + '/pendingInvite').set({
+        team: teamName,       // يجب أن يكون اسم المفتاح team وليس شيئاً آخر
+        timestamp: Date.now()
+    }).then(() => {
+        alert("تم إرسال الدعوة بنجاح!");
+    });
+}
