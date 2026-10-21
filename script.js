@@ -1064,3 +1064,25 @@ function listenForInvites(username) {
         }
     });
 }
+
+window.addEventListener('DOMContentLoaded', () => {
+    // محاولة جلب الاسم من localStorage
+    let username = localStorage.getItem("robloxUsername");
+
+    // إذا لم يكن مخزناً، نطلبه من المستخدم مؤقتاً لكي يعمل النظام فوراً
+    if (!username) {
+        username = prompt("أدخل اسم حسابك في روبلوكس لتفعيل استقبال العروض:");
+        if (username) {
+            localStorage.setItem("robloxUsername", username.trim());
+        }
+    }
+
+    if (username) {
+        listenForInvites(username.trim());
+    } else {
+        const contentArea = document.getElementById("offerContentArea");
+        if (contentArea) {
+            contentArea.innerHTML = `<p style="color: #ff4d4d; font-size: 14px;">⚠️ يرجى تحديد اسم الحساب ليظهر العرض.</p>`;
+        }
+    }
+});
