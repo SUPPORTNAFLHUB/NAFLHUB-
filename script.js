@@ -1090,13 +1090,71 @@ window.addEventListener('DOMContentLoaded', () => {
 db.ref('users/' + username + '/pendingInvite').on('value', (snapshot) => {
     const inviteData = snapshot.val();
     // يقرأinviteData.team
-});
+})
 
+// دالة إرسال العرض للاعب
 function sendTeamInvite(targetUsername, teamName) {
-    db.ref('users/' + targetUsername + '/pendingInvite').set({
-        team: teamName,       // يجب أن يكون اسم المفتاح team وليس شيئاً آخر
+    if (!targetUsername || !teamName) {
+        alert("يرجى إدخال اسم اللاعب واسم الفريق بشكل صحيح!");
+        return;
+    }
+
+    // تنظيف اسم اللاعب من أي مسافات زائدة
+    const cleanUsername = targetUsername.trim();
+
+    // حفظ الدعوة في المسار الصحيح الذي يستمع له اللاعب
+    db.ref('users/' + cleanUsername + '/pendingInvite').set({
+        team: teamName.trim(),
         timestamp: Date.now()
     }).then(() => {
-        alert("تم إرسال الدعوة بنجاح!");
+        alert("تم إرسال الدعوة بنجاح إلى اللاعب: " + cleanUsername + " للنادي: " + teamName);
+    }).catch((error) => {
+        alert("حدث خطأ أثناء الإرسال: " + error.message);
     });
 }
+// مثال على ربطها بالزر في لوحة الأونر:
+const playerInput = document.getElementById("playerNameInput").value; // خانة كتابة اسم اللاعب
+const teamInput = document.getElementById("teamNameInput").value;     // خانة كتابة اسم النادي
+
+sendTeamInvite(playerInput, teamInput);
+
+function loadMyInvites(username) {
+    const container = document.getElementById("myInvites");
+    if (!container || !db) return;
+
+    // الاستماع المباشر لعروض Firebase لكي يظهر العرض فور إرساله دون الحاجة لريفريش
+    db.ref('offers').on('value', (snapshot) => {
+        const offersData = snapshot.val();
+        if (!offersData) {
+            container.innerHTML = "<p style='color: #888;'>لا توجد عروض حالياً.</p>";
+            return;
+        }
+
+        let myOffers = Object.values(offersData).filter(o => o.to === username && o.status === "pending");
+
+        if (myOffers.length === 0) {
+            container.innerHTML = "<p style='color: #888;'>لا توجد عروض حالياً.</p>";
+            return;
+        }
+
+        container.innerHTML = "";
+        myOffers.forEach((offer) => {
+            const box = document.createElement("div");
+            box.style.cssText = "background:#2b2b2b; padding:10px; margin:8px 0; border-radius:6px; text-align:right;";
+            box.innerHTML = `
+                عرض للانضمام إلى فريق: <b>${offer.fromTeam}</b> (مُرسل من: ${offer.from})<br>
+                <div style="margin-top:8px;">
+                    <button onclick="respondOffer('${offer.id}', 'accepted', '${offer.fromTeam}')" style="background:#00ff87; border:none; padding:5px 12px; font-weight:bold; cursor:pointer; color:#000; border-radius:4px; margin-left:5px;">قبول ✅</button>
+                    <button onclick="respondOffer('${offer.id}', 'rejected', '')" style="background:#ff4444; color:#fff; border:none; padding:5px 12px; cursor:pointer; border-radius:4px;">رفض ❌</button>
+                </div>
+            `;
+            container.appendChild(box);
+        });
+    });
+}
+
+// ضع هذا السطر في نهاية ملف script.js أو عند تحميل الصفحة
+window.addEventListener('DOMContentLoaded', () => {
+    const myUsername = localStorage.getItem("robloxUsername") || "wassim1mouh";
+    loadMyInvites(myUsername);
+});
